@@ -46,7 +46,7 @@ $LOC = "norwayeast"
 az group create -n $RG -l $LOC
 ```
 
-## 2 — Deploy the infrastructure
+## 2 — Deploy the infrastructure (first pass — expect a known failure)
 
 ```powershell
 # Your own Entra object ID (for Key Vault secret access)
@@ -58,16 +58,18 @@ az deployment group create `
   --parameters principalId=$PRINCIPAL
 ```
 
-The deployment takes ~3–5 minutes. On success you get outputs:
+The **first** run creates Log Analytics, Managed Identity, ACR, Key Vault,
+Storage + File Share, and Container Apps Environment successfully, then
+**fails at the Container App** because the app references two Key Vault
+secrets that don't exist yet. This is expected — the bootstrap order
+is:
 
-```
-acrLoginServer      : crflowcasemcpdev.azurecr.io
-keyVaultName        : kv-flowcasemcp-dev
-storageAccountName  : stflowcasemcpdev
-fileShareName       : availability
-containerAppName    : ca-flowcasemcp-dev
-containerAppFqdn    : ca-flowcasemcp-dev.<hash>.norwayeast.azurecontainerapps.io
-```
+1. Create infra (this step — partial failure is fine)
+2. Seed the two secrets in step 3
+3. Re-run the same deployment → Container App comes up cleanly
+
+Expected error on first run: `Unable to get value using Managed identity
+... for secret mcp-api-key`.
 
 ## 3 — Set the secrets in Key Vault
 
@@ -90,7 +92,19 @@ az keyvault secret set `
 Write-Host "MCP API key (save somewhere safe):" $MCP_KEY
 ```
 
-## 4 — Upload the availability workbook
+## 4 — Re-run the deployment (second pass — creates Container App)
+
+```powershell
+az deployment group create `
+  --resource-group $RG `
+  --template-file infra/main.bicep `
+  --parameters principalId=$PRINCIPAL
+```
+
+This time the Container App resolves both secrets and provisions.
+Outputs include `containerAppFqdn`.
+
+## 5 — Upload the availability workbook
 
 ```powershell
 $STORAGE = "stflowcasemcpdev"
@@ -106,7 +120,7 @@ az storage file upload `
 When you regenerate the PBI export, upload the new file with the same
 command — the server's AvailabilityIndex auto-reloads on mtime changes.
 
-## 5 — Build and push the container image
+## 6 — Build and push the container image
 
 ```powershell
 $ACR = "crflowcasemcpdev"
@@ -119,7 +133,7 @@ az acr build `
 `az acr build` pushes the image to ACR without needing a local Docker
 daemon. Takes ~2–3 minutes.
 
-## 6 — Point the Container App at the real image
+## 7 — Point the Container App at the real image
 
 ```powershell
 $APP = "ca-flowcasemcp-dev"
@@ -133,7 +147,7 @@ az containerapp update `
 After a few seconds, the app restarts with the real image and picks up
 the injected secrets.
 
-## 7 — Verify
+## 8 — Verify
 
 ```powershell
 $FQDN = (az containerapp show -n $APP -g $RG --query properties.configuration.ingress.fqdn -o tsv)
@@ -151,7 +165,7 @@ curl -w "%{http_code}\n" -H "X-API-Key: wrong" "https://$FQDN/mcp"
 # expected: 403
 ```
 
-## 8 — Connect Claude Code to the hosted MCP
+## 9 — Connect Claude Code to the hosted MCP
 
 Add a remote MCP to your Claude Code config (`~/.claude/settings.json`
 or the per-project `.mcp.json`):

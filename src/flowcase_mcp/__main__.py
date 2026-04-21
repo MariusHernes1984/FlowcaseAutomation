@@ -21,7 +21,10 @@ def _run_stdio() -> None:
 
 def _run_streamable_http() -> None:
     # Imports are deferred so stdio-only deployments don't pay the cost.
+    from contextlib import asynccontextmanager
+
     import uvicorn
+    from mcp.server.transport_security import TransportSecuritySettings
     from starlette.applications import Starlette
     from starlette.requests import Request
     from starlette.responses import PlainTextResponse
@@ -31,15 +34,35 @@ def _run_streamable_http() -> None:
 
     api_key = get_api_key_from_env()
 
+    # The default DNS-rebinding protection only allows localhost Host
+    # headers — in a hosted deployment (Azure Container Apps, any reverse
+    # proxy) every valid request has the deployment FQDN as Host, so the
+    # server rejects them with 421. Disable the check and rely on the
+    # ingress + our X-API-Key middleware for host validation instead.
+    mcp.settings.transport_security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=False,
+    )
+
+    # Build the MCP app FIRST — this lazy-initializes the session manager
+    # that we need to start from our outer lifespan.
+    mcp_app = mcp.streamable_http_app()
+
     async def healthcheck(_request: Request) -> PlainTextResponse:
         return PlainTextResponse("ok")
 
-    mcp_app = mcp.streamable_http_app()
+    @asynccontextmanager
+    async def lifespan(_app):
+        # Starlette's Mount() does NOT propagate a child app's lifespan
+        # to the parent, so we have to run the MCP session manager here.
+        async with mcp.session_manager.run():
+            yield
+
     app = Starlette(
         routes=[
             Route("/health", healthcheck),
             Mount("/", app=mcp_app),
-        ]
+        ],
+        lifespan=lifespan,
     )
     app.add_middleware(
         ApiKeyAuthMiddleware,
