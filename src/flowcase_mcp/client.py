@@ -135,18 +135,42 @@ class FlowcaseClient:
         *,
         office_ids: list[str] | None = None,
         country_codes: list[str] | None = None,
+        regions: list[str] | None = None,
     ) -> list[str]:
-        """Resolve a list of office IDs from either explicit IDs or country codes.
+        """Resolve a list of office IDs from explicit IDs, regions, or country codes.
 
         Precedence:
           1. ``office_ids`` → returned as-is.
-          2. ``country_codes`` → all offices across those countries.
-          3. Fall back to ``self.default_country``.
+          2. ``regions`` → resolved via ``regions.REGION_MAP`` to NO offices.
+          3. ``country_codes`` → all offices across those countries.
+          4. Fall back to ``self.default_country``.
 
         Raises ``FlowcaseConfigError`` when nothing resolves.
         """
         if office_ids:
             return list(office_ids)
+
+        if regions:
+            # Import here to avoid a cycle at module load time.
+            from flowcase_mcp.regions import (
+                REGION_MAP,
+                resolve_regions_to_office_ids,
+            )
+
+            countries = await self.get_countries()
+            info = resolve_regions_to_office_ids(
+                regions, countries, country_code=self._default_country
+            )
+            if info["unknown_regions"]:
+                raise FlowcaseConfigError(
+                    f"Unknown region(s): {info['unknown_regions']!r}. "
+                    f"Available: {sorted(REGION_MAP.keys())}"
+                )
+            if not info["office_ids"]:
+                raise FlowcaseConfigError(
+                    f"No offices matched regions {regions!r} in Flowcase."
+                )
+            return info["office_ids"]
 
         codes = [c.lower() for c in (country_codes or [self._default_country])]
         countries = await self.get_countries()

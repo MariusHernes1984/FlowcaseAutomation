@@ -34,6 +34,7 @@ from flowcase_mcp.formatting import (
     compact_user,
     pick_lang,
 )
+from flowcase_mcp.regions import REGION_MAP, region_overview
 
 load_dotenv()
 
@@ -152,14 +153,23 @@ class SearchUsersInput(BaseModel):
         default=None,
         description=(
             "Country codes to scope the listing (e.g. ['no'] or ['no','se']). "
-            "If omitted and no office_ids given, the server's default country "
-            "(FLOWCASE_DEFAULT_COUNTRY) is used."
+            "If omitted and no office_ids/regions given, the server's default "
+            "country (FLOWCASE_DEFAULT_COUNTRY) is used."
+        ),
+    )
+    regions: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Atea NO regions to scope the search: øst, sør, sørvest, vest, "
+            "nord (aliases like 'south', 'west' are accepted). Takes "
+            "precedence over country_codes. Use flowcase_list_regions to "
+            "see the mapping."
         ),
     )
     office_ids: Optional[list[str]] = Field(
         default=None,
         description=(
-            "Explicit office IDs. Takes precedence over country_codes. "
+            "Explicit office IDs. Takes precedence over regions and country_codes. "
             "Obtain via flowcase_list_offices if needed."
         ),
     )
@@ -203,6 +213,7 @@ async def flowcase_search_users(params: SearchUsersInput) -> str:
         office_ids = await client.resolve_office_ids(
             office_ids=params.office_ids,
             country_codes=params.country_codes,
+            regions=params.regions,
         )
     except Exception as e:
         return f"Error: {format_http_error(e)}"
@@ -256,11 +267,12 @@ async def flowcase_search_users(params: SearchUsersInput) -> str:
             ensure_ascii=False,
         )
 
-    scope = (
-        f"{len(office_ids)} office(s)"
-        if params.office_ids
-        else f"country {params.country_codes or [client.default_country]}"
-    )
+    if params.office_ids:
+        scope = f"{len(office_ids)} office(s)"
+    elif params.regions:
+        scope = f"region(s) {params.regions}"
+    else:
+        scope = f"country {params.country_codes or [client.default_country]}"
     lines: list[str] = [
         f"# Users in {scope}",
         f"_Showing {len(items)} result(s) from offset {params.from_offset}._",
@@ -744,9 +756,17 @@ class FindUsersBySkillInput(BaseModel):
             "FLOWCASE_DEFAULT_COUNTRY). Use ['no','se'] for multi-country."
         ),
     )
+    regions: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Atea NO regions to scope the search: øst, sør, sørvest, vest, "
+            "nord. Takes precedence over country_codes. Use "
+            "flowcase_list_regions to see the mapping."
+        ),
+    )
     office_ids: Optional[list[str]] = Field(
         default=None,
-        description="Explicit office IDs. Takes precedence over country_codes.",
+        description="Explicit office IDs. Takes precedence over regions and country_codes.",
     )
     all_countries: bool = Field(
         default=False,
@@ -881,6 +901,7 @@ async def flowcase_find_users_by_skill(params: FindUsersBySkillInput) -> str:
             office_ids = await client.resolve_office_ids(
                 office_ids=params.office_ids,
                 country_codes=params.country_codes,
+                regions=params.regions,
             )
         except Exception as e:
             return f"Error: {format_http_error(e)}"
@@ -890,6 +911,8 @@ async def flowcase_find_users_by_skill(params: FindUsersBySkillInput) -> str:
             return f"Error: {format_http_error(e)}"
         if params.office_ids:
             scope_label = f"{len(office_ids)} office(s)"
+        elif params.regions:
+            scope_label = f"region(s) {params.regions}"
         else:
             scope_label = (
                 f"country {params.country_codes or [client.default_country]}"
@@ -1227,3 +1250,70 @@ async def flowcase_get_availability(params: GetAvailabilityInput) -> str:
         else:
             lines.append(f"- {month.capitalize()}: _n/a_")
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# flowcase_list_regions
+# ---------------------------------------------------------------------------
+
+
+class ListRegionsInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN)
+
+
+@mcp.tool(
+    name="flowcase_list_regions",
+    annotations={
+        "title": "List Atea NO regions with their offices",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    },
+)
+async def flowcase_list_regions(params: ListRegionsInput) -> str:
+    """Show the Atea Norway region mapping with office IDs and user counts.
+
+    Useful when you want to scope a skill search or user listing to a
+    specific region (e.g. ``regions=["sør"]``). Any office names listed
+    in the mapping that don't currently exist in Flowcase are flagged.
+    """
+    client = _get_client()
+    try:
+        countries = await client.get_countries()
+    except Exception as e:
+        return f"Error: {format_http_error(e)}"
+
+    overview = region_overview(countries, country_code=client.default_country)
+
+    if params.response_format == ResponseFormat.JSON:
+        return json.dumps(
+            {"country": client.default_country, "regions": overview},
+            indent=2,
+            ensure_ascii=False,
+        )
+
+    lines = [f"# Atea {client.default_country.upper()} regions", ""]
+    for entry in overview:
+        lines.append(
+            f"## {entry['region'].capitalize()} — "
+            f"{entry['num_offices']} office(s), {entry['num_users']} users"
+        )
+        for o in entry["matched_offices"]:
+            users = o.get("num_users")
+            u_str = f" ({users} users)" if users is not None else ""
+            lines.append(
+                f"- **{o['office_name']}**{u_str} "
+                f"— office_id: `{o['office_id']}`"
+            )
+        if entry["missing_offices"]:
+            missing_names = ", ".join(
+                m["office_name"] for m in entry["missing_offices"]
+            )
+            lines.append(f"- ⚠ _Not in Flowcase: {missing_names}_")
+        lines.append("")
+
+    valid_keys = ", ".join(sorted(REGION_MAP.keys()))
+    lines.append(f"_Valid region keys: {valid_keys}._")
+    return "\n".join(lines).strip()

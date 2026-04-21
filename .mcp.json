@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "flowcase": {
+      "command": ".venv/Scripts/python.exe",
+      "args": ["-m", "flowcase_mcp"]
+    }
+  }
+}

@@ -73,6 +73,7 @@ launches the server from.
 | `flowcase_list_skills` | Browse the skill taxonomy (name + ID) |
 | `flowcase_find_users_by_skill` | Find consultants matching one or more skills (optionally filtered by availability) |
 | `flowcase_get_availability` | Monthly billing rate for a single consultant |
+| `flowcase_list_regions` | Show Atea NO region mapping (Øst/Sør/Sørvest/Vest/Nord) |
 
 All tools support `response_format="markdown"` (default) or `"json"`.
 
@@ -142,6 +143,23 @@ flowcase_get_availability(user_id="5c4a...")
 
 Matching is by display name (case- and token-order-insensitive). If a
 consultant isn't in the workbook, the tool returns a clear message.
+
+### Atea NO regions
+
+The five Atea Norway regions map to these offices:
+
+| Region | Offices |
+|---|---|
+| **Øst** | Oslo, Hamar, Fredrikstad |
+| **Sør** | Drammen, Kongsberg, Sandefjord, Arendal, Kristiansand |
+| **Sørvest** | Stavanger, Haugesund, Stord |
+| **Vest** | Bergen, Fosnavåg, Førde, Kristiansund, Ålesund |
+| **Nord** | Trondheim, Steinkjer, Bodø, Tromsø, Alta, Hammerfest |
+
+Pass `regions=["sør"]` (or aliases like `south`, `sor`) to either
+`flowcase_search_users` or `flowcase_find_users_by_skill` to scope by
+region instead of individual offices. Call `flowcase_list_regions` to
+see live user counts per region.
 
 ### Browse by office
 1. `flowcase_list_offices(country_codes=["no"])` → office IDs
