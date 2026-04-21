@@ -1,16 +1,30 @@
-.venv/
-venv/
-__pycache__/
-*.py[cod]
-*.egg-info/
-build/
-dist/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.env
-.env.*
-!.env.example
-tests/
-.git/
-.gitignore
+# This is the web/backend .dockerignore. The build context for az acr build
+# is the repo root so node_modules/dist/venv from anywhere must be excluded.
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+**/build/
+**/dist/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/node_modules/
+
+# Never ship secrets or data into the image
+**/.env
+**/.env.*
+!**/.env.example
+data/
+
+# MCP / IDE / OS junk
+.mcp.json
+**/.vscode/
+**/.idea/
+**/.DS_Store
+**/Thumbs.db
+**/.git/
+**/.github/
+**/.claude/

@@ -1,13 +1,18 @@
-"""FastAPI entry point — wires auth, agents and (later) chat routers."""
+"""FastAPI entry point — wires auth, agents and chat routers, and serves
+the built React SPA from ``/`` so a single Container App hosts both."""
 
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from flowcase_web import storage
 from flowcase_web.agents import ensure_seed_agents
@@ -53,9 +58,40 @@ def create_app() -> FastAPI:
     async def healthcheck() -> dict[str, str]:
         return {"status": "ok", "env": settings.environment}
 
-    app.include_router(auth_router, prefix="/auth", tags=["auth"])
-    app.include_router(agents_router, prefix="/agents", tags=["agents"])
-    app.include_router(chats_router, prefix="/chats", tags=["chats"])
+    # All business endpoints live under /api so the SPA can own everything
+    # else (client-side routing) without collisions.
+    api = APIRouter(prefix="/api")
+    api.include_router(auth_router, prefix="/auth", tags=["auth"])
+    api.include_router(agents_router, prefix="/agents", tags=["agents"])
+    api.include_router(chats_router, prefix="/chats", tags=["chats"])
+    app.include_router(api)
+
+    # Serve the built React SPA when the dist directory is present.
+    # In local dev (uvicorn --reload) the dist folder usually doesn't exist
+    # and Vite handles the UI; skip mounting then.
+    dist_dir = Path(
+        os.environ.get("FLOWCASE_WEB_STATIC_DIR", "/app/static")
+    ).resolve()
+    if dist_dir.is_dir() and (dist_dir / "index.html").exists():
+        assets_dir = dist_dir / "assets"
+        if assets_dir.is_dir():
+            app.mount(
+                "/assets",
+                StaticFiles(directory=str(assets_dir)),
+                name="assets",
+            )
+
+        @app.get("/{path:path}")
+        async def spa_fallback(path: str) -> FileResponse:
+            # /api/* and /health are declared above, so they take priority.
+            candidate = dist_dir / path
+            if candidate.is_file():
+                return FileResponse(candidate)
+            index = dist_dir / "index.html"
+            if not index.exists():
+                raise HTTPException(status_code=404)
+            return FileResponse(index)
+
     return app
 
 

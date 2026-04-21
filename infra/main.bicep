@@ -434,3 +434,165 @@ output identityClientId string = identity.properties.clientId
 output cosmosAccountName string = cosmos.name
 output cosmosEndpoint string = cosmos.properties.documentEndpoint
 output cosmosDatabaseName string = cosmosDb.name
+
+// ============================================================================
+// Flowcase Web orchestrator — Container App
+// ============================================================================
+
+@description('Hostname (FQDN suffix inside the Container Apps environment) of the Flowcase MCP, used as MCP_URL. Auto-derived from the MCP app FQDN.')
+var mcpInternalUrl = 'https://${app.properties.configuration.ingress.fqdn}/mcp'
+
+resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
+  name: 'ca-${suffix}-web'
+  location: location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${identity.id}': {}
+    }
+  }
+  dependsOn: [
+    acrPullRole
+    kvReaderForIdentity
+  ]
+  properties: {
+    managedEnvironmentId: env.id
+    configuration: {
+      ingress: {
+        external: true
+        targetPort: 8001
+        transport: 'auto'
+        allowInsecure: false
+      }
+      registries: [
+        {
+          server: acr.properties.loginServer
+          identity: identity.id
+        }
+      ]
+      secrets: [
+        {
+          name: 'admin-password'
+          keyVaultUrl: '${kv.properties.vaultUri}secrets/admin-password'
+          identity: identity.id
+        }
+        {
+          name: 'jwt-secret'
+          keyVaultUrl: '${kv.properties.vaultUri}secrets/jwt-secret'
+          identity: identity.id
+        }
+        {
+          name: 'azure-openai-api-key'
+          keyVaultUrl: '${kv.properties.vaultUri}secrets/azure-openai-api-key'
+          identity: identity.id
+        }
+        {
+          name: 'cosmos-key'
+          keyVaultUrl: '${kv.properties.vaultUri}secrets/cosmos-key'
+          identity: identity.id
+        }
+        {
+          name: 'mcp-api-key'
+          keyVaultUrl: '${kv.properties.vaultUri}secrets/mcp-api-key'
+          identity: identity.id
+        }
+      ]
+    }
+    template: {
+      containers: [
+        {
+          name: 'flowcase-web'
+          image: initialImage
+          resources: {
+            cpu: json(containerCpu)
+            memory: containerMemory
+          }
+          env: [
+            {
+              name: 'ENVIRONMENT'
+              value: envName
+            }
+            {
+              name: 'PORT'
+              value: '8001'
+            }
+            {
+              name: 'FLOWCASE_WEB_STATIC_DIR'
+              value: '/app/static'
+            }
+            {
+              name: 'ADMIN_EMAIL'
+              value: 'marius.hernes@atea.no'
+            }
+            {
+              name: 'ADMIN_PASSWORD'
+              secretRef: 'admin-password'
+            }
+            {
+              name: 'JWT_SECRET'
+              secretRef: 'jwt-secret'
+            }
+            {
+              name: 'COSMOS_ENDPOINT'
+              value: cosmos.properties.documentEndpoint
+            }
+            {
+              name: 'COSMOS_KEY'
+              secretRef: 'cosmos-key'
+            }
+            {
+              name: 'COSMOS_DATABASE'
+              value: cosmosDb.name
+            }
+            {
+              name: 'AZURE_OPENAI_ENDPOINT'
+              value: 'https://foundry-test-kate.cognitiveservices.azure.com/'
+            }
+            {
+              name: 'AZURE_OPENAI_API_KEY'
+              secretRef: 'azure-openai-api-key'
+            }
+            {
+              name: 'DEFAULT_LLM_DEPLOYMENT'
+              value: 'gpt-4.1'
+            }
+            {
+              name: 'MCP_URL'
+              value: mcpInternalUrl
+            }
+            {
+              name: 'MCP_API_KEY'
+              secretRef: 'mcp-api-key'
+            }
+          ]
+          probes: [
+            {
+              type: 'Liveness'
+              httpGet: {
+                path: '/health'
+                port: 8001
+              }
+              initialDelaySeconds: 15
+              periodSeconds: 30
+            }
+            {
+              type: 'Readiness'
+              httpGet: {
+                path: '/health'
+                port: 8001
+              }
+              periodSeconds: 10
+            }
+          ]
+        }
+      ]
+      scale: {
+        minReplicas: 0
+        maxReplicas: 3
+      }
+    }
+  }
+}
+
+output webAppName string = webApp.name
+output webAppFqdn string = webApp.properties.configuration.ingress.fqdn

@@ -14,10 +14,12 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
+      // In prod the frontend is served from the same Container App as the
+      // backend, and /api/* lives on the backend. Keep the path intact in
+      // dev so code paths work identically.
       "/api": {
         target: "http://localhost:8001",
         changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/api/, ""),
       },
     },
   },
