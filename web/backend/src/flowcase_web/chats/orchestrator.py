@@ -185,6 +185,15 @@ async def run_turn(
                     yield _sse("error", {"message": err})
                     result_text = err
                 else:
+                    # Flowcase tools all accept response_format in their `params`
+                    # object. We pin it to 'json' so the frontend can render
+                    # structured result cards and the LLM still parses the
+                    # payload fine. If the model already set it explicitly,
+                    # leave their choice alone.
+                    if name.startswith("flowcase_"):
+                        params = arguments.setdefault("params", {})
+                        if isinstance(params, dict):
+                            params.setdefault("response_format", "json")
                     yield _sse(
                         "tool_call",
                         {"name": name, "arguments": arguments, "id": tc["id"]},

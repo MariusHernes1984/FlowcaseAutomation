@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { listAgents } from "@/api/agents";
 import { getChat, listChats, streamChat } from "@/api/chats";
+import { renderToolResult } from "@/components/tool-results";
 import { Badge, Button, Card, Textarea } from "@/components/ui";
 import type { Agent, ChatMessage, ChatSessionSummary } from "@/types";
 
@@ -366,16 +367,28 @@ function ToolBlock({ event }: { event: ToolEvent }) {
         <Badge tone={event.state === "done" ? "green" : "amber"}>
           {event.state === "done" ? "ferdig" : "kjører…"}
         </Badge>
+        {event.truncated && <Badge tone="amber">trunkert</Badge>}
       </div>
-      {event.arguments !== undefined && (
-        <pre className="mt-2 overflow-x-auto rounded bg-white p-2 text-[11px] text-slate-600">
-          {JSON.stringify(event.arguments, null, 2)}
-        </pre>
-      )}
+
       {event.content && (
+        <div className="mt-3">{renderToolResult(event.name, event.content)}</div>
+      )}
+
+      {event.arguments !== undefined && (
         <details className="mt-2 text-slate-700">
           <summary className="cursor-pointer select-none text-[11px] text-slate-500">
-            Vis resultat {event.truncated ? "(trunkert)" : ""}
+            Argumenter
+          </summary>
+          <pre className="mt-1 overflow-x-auto rounded bg-white p-2 text-[11px] text-slate-600">
+            {JSON.stringify(event.arguments, null, 2)}
+          </pre>
+        </details>
+      )}
+
+      {event.content && (
+        <details className="mt-1 text-slate-700">
+          <summary className="cursor-pointer select-none text-[11px] text-slate-500">
+            Rå JSON
           </summary>
           <pre className="mt-1 max-h-64 overflow-auto rounded bg-white p-2 text-[11px] text-slate-700">
             {event.content}

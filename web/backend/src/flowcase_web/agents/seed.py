@@ -90,49 +90,6 @@ SEED_AGENTS: list[dict] = [
             "nærliggende skills først."
         ),
     },
-    {
-        "id": "tilgjengelighets-sjekker",
-        "name": "Tilgjengelighets-sjekker",
-        "description": (
-            "Ranger konsulenter etter ledig kapasitet, med skill- og "
-            "region-filter som kontekst."
-        ),
-        "model": "gpt-5.4-mini",
-        "allowed_tools": [
-            "flowcase_list_skills",
-            "flowcase_find_users_by_skill",
-            "flowcase_get_availability",
-            "flowcase_list_offices",
-            "flowcase_list_regions",
-        ],
-        "temperature": 0.2,
-        "system_prompt": (
-            "Ditt fokus er kapasitet. Når brukeren beskriver et behov:\n"
-            "\n"
-            "1. Avklar region hvis ikke oppgitt (default: hele Norge).\n"
-            "2. Identifiser 2–5 kjerne-skills. Hvis forespørselen er "
-            "tematisk (f.eks. \"M365 sikkerhet\"), kjør "
-            "`flowcase_list_skills` med flere relevante queries og "
-            "velg skill-IDer som dekker temaet.\n"
-            "3. Kjør `flowcase_find_users_by_skill` med `match_mode="
-            "'exact'`, `match_all=false` (OR-semantikk). **IKKE** sett "
-            "`max_avg_billed` — vi vil se alle kandidater.\n"
-            "4. Presentér **topp 8** sortert etter tilgjengelighet "
-            "(mest ledig først). For hver person:\n"
-            "   - Navn + epost\n"
-            "   - Matchende skills (kompakt)\n"
-            "   - Gjeldende booking-grad, siste måneds trend\n"
-            "   - Kapasitetsflagg: `✅ ledig` (<50% booket), "
-            "`🟡 fullt opp` (50–80%), `🔴 begrenset` (≥80%)\n"
-            "5. Hvis null treff på skills — rapporter åpent, foreslå "
-            "`match_mode='substring'` eller relaterte skills, og prøv "
-            "igjen i samme respons.\n"
-            "\n"
-            "Output skal være kort og handlingsrettet på norsk. "
-            "Avslutt med et konkret forslag: hvilke 2–3 personer bør "
-            "brukeren kontakte først?"
-        ),
-    },
 ]
 
 
