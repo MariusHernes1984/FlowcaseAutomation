@@ -25,6 +25,7 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from flowcase_mcp.availability import get_default_index
 from flowcase_mcp.client import FlowcaseClient, format_http_error
 from flowcase_mcp.formatting import (
     DEFAULT_CV_SECTIONS,
@@ -697,25 +698,50 @@ async def flowcase_list_skills(params: ListSkillsInput) -> str:
 # ---------------------------------------------------------------------------
 
 
+class MatchMode(str, Enum):
+    EXACT = "exact"
+    PREFIX = "prefix"
+    SUBSTRING = "substring"
+
+
 class FindUsersBySkillInput(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
     skills: list[str] = Field(
         ...,
         description=(
-            "Skill names or IDs to match (ANY-of logic — a user with any of "
-            "the listed skills counts as a hit). Names are matched as "
-            "case-insensitive substrings across all language variants, so "
-            "'python' matches 'Python 2', 'Python 3', etc. 24-char hex "
-            "strings are treated as raw skill IDs."
+            "Skill names or IDs. For MAXIMUM PRECISION, call "
+            "flowcase_list_skills(query=...) first to confirm the exact "
+            "skill name or grab the skill_id (24-char hex). Raw skill IDs "
+            "are always accepted and bypass name matching. Names are "
+            "resolved according to match_mode."
         ),
         min_length=1,
+    )
+    match_mode: MatchMode = Field(
+        default=MatchMode.EXACT,
+        description=(
+            "How to match skill names (ignored for raw IDs). "
+            "'exact' (default, tightest) — case-insensitive equality. "
+            "'prefix' — label starts with the query, e.g. 'Python' → "
+            "Python, Python 2, Python 3. "
+            "'substring' — label contains the query (broadest; may match "
+            "dozens of skills, useful for exploration)."
+        ),
+    )
+    match_all: bool = Field(
+        default=False,
+        description=(
+            "If true, a user must have at least one skill from EACH entry "
+            "in 'skills' (AND). Example: skills=['Python','Django'], "
+            "match_all=true → only users with both. Default false = user "
+            "needs any skill from the union (OR)."
+        ),
     )
     country_codes: Optional[list[str]] = Field(
         default=None,
         description=(
             "Country codes to scope results (default: server's "
-            "FLOWCASE_DEFAULT_COUNTRY). Pass ['all'] or explicit office_ids "
-            "to broaden."
+            "FLOWCASE_DEFAULT_COUNTRY). Use ['no','se'] for multi-country."
         ),
     )
     office_ids: Optional[list[str]] = Field(
@@ -739,6 +765,26 @@ class FindUsersBySkillInput(BaseModel):
         default=False,
         description="If true, include users marked deactivated in Flowcase.",
     )
+    max_avg_billed: Optional[float] = Field(
+        default=None,
+        description=(
+            "Filter out consultants whose average billing rate across "
+            "available months exceeds this threshold (0.0-1.0). "
+            "Example: 0.7 → only return people who are at most 70% booked "
+            "on average. Requires the availability workbook to be present."
+        ),
+        ge=0.0,
+        le=1.0,
+    )
+    include_availability: bool = Field(
+        default=True,
+        description=(
+            "If true, enrich each match with availability data (monthly "
+            "billing rates + averages) from the availability workbook. "
+            "Consultants without availability data are returned with null "
+            "fields unless max_avg_billed is set (those are filtered)."
+        ),
+    )
     language: str = Field(
         default_factory=lambda: os.environ.get("FLOWCASE_DEFAULT_LANGUAGE", "no"),
         description="Language for skill name resolution and display.",
@@ -757,39 +803,62 @@ class FindUsersBySkillInput(BaseModel):
     },
 )
 async def flowcase_find_users_by_skill(params: FindUsersBySkillInput) -> str:
-    """Find consultants who have any of the given skills.
+    """Find consultants who match one or more skills.
 
-    Under the hood this tool combines two data sources because the Flowcase
-    proxy's ``/search`` endpoint does NOT support skill filters:
+    Combines three data sources under the hood (because ``/search`` on the
+    Atea proxy does NOT support skill filters):
 
-    * ``/masterdata/technologies/tags`` — skill name → ID resolution (cached)
-    * ``/data_export/users`` — full user roster with skill IDs (cached 10 min)
-    * ``/search`` — to resolve which users are in the target country's offices
+    * ``/masterdata/technologies/tags`` — skill name → ID resolution
+    * ``/data_export/users`` — user roster with skill IDs per user
+    * ``/search`` — resolving which users belong to the target offices
 
-    For country-scoped queries, the tool intersects the skill matches from
-    ``/data_export/users`` with the user-ID set from ``/search``. Default
-    scope is the server's configured country.
+    Precision guidance:
 
-    The output is a compact list suitable for follow-up calls to
-    ``flowcase_get_cv``.
+    * **Default** is ``match_mode=exact`` — the query must equal a skill
+      name. This gives precise, trustworthy results.
+    * To COMBINE multiple skills, pass ``match_all=true``. Example:
+      skills=['Microsoft Azure','Terraform'], match_all=true → only users
+      who have both.
+    * For exploration, use ``match_mode=substring`` (broadest) or call
+      ``flowcase_list_skills`` first to see exact spellings and grab
+      skill_ids for direct use.
+
+    Response always includes the list of resolved skill names so you can
+    verify the query expanded as expected.
     """
     client = _get_client()
 
     try:
-        resolved_skill_ids, unresolved = await client.resolve_skill_identifiers(
-            params.skills, lang=params.language
+        resolved_ids, unresolved, per_input = await client.resolve_skill_identifiers(
+            params.skills,
+            lang=params.language,
+            match_mode=params.match_mode.value,
         )
     except Exception as e:
         return f"Error: {format_http_error(e)}"
 
-    if not resolved_skill_ids:
+    if not resolved_ids:
         return (
-            "No skills matched your input. Browse the taxonomy via "
-            f"flowcase_list_skills to find the right spelling. "
+            f"No skills matched. match_mode={params.match_mode.value}. "
+            f"Try flowcase_list_skills(query=...) to find the right "
+            f"spelling, or use match_mode='substring' for broader matching. "
             f"Unresolved: {params.skills}"
         )
 
-    skill_id_set = set(resolved_skill_ids)
+    # Build per-input ID sets (for match_all AND logic).
+    per_input_sets = [
+        (original, set(ids))
+        for original, ids in per_input.items()
+        if ids
+    ]
+
+    if params.match_all and len(per_input_sets) > 1:
+        # For AND, each input must match independently.
+        required_sets = [ids for _, ids in per_input_sets]
+    else:
+        required_sets = [set(resolved_ids)]
+
+    union_id_set = set(resolved_ids)
 
     # Build a lookup for skill names so we can show which skill matched.
     try:
@@ -832,44 +901,107 @@ async def flowcase_find_users_by_skill(params: FindUsersBySkillInput) -> str:
     except Exception as e:
         return f"Error: {format_http_error(e)}"
 
+    availability_index = get_default_index() if (
+        params.include_availability or params.max_avg_billed is not None
+    ) else None
+
     matches: list[dict[str, Any]] = []
     for user in all_users:
         if user.get("deactivated") and not params.include_deactivated:
             continue
         user_skills = set(user.get("skills") or [])
-        matching_ids = user_skills & skill_id_set
+        # All required sets must intersect (AND when match_all, single set otherwise).
+        if not all(user_skills & required for required in required_sets):
+            continue
+        matching_ids = user_skills & union_id_set
         if not matching_ids:
             continue
         uid = user.get("id")
         if office_user_ids is not None and uid not in office_user_ids:
             continue
-        matches.append(
-            {
-                "user_id": uid,
-                "cv_id": user.get("cv_id"),
-                "name": user.get("name"),
-                "email": user.get("email"),
-                "matching_skills": sorted(
-                    skill_name_by_id.get(sid, sid) for sid in matching_ids
-                ),
-                "matching_skill_ids": sorted(matching_ids),
-                "total_skills": len(user_skills),
-                "deactivated": user.get("deactivated"),
-            }
-        )
 
-    # Order: most matches first, then by total skills desc.
-    matches.sort(
-        key=lambda m: (-len(m["matching_skills"]), -m["total_skills"], (m.get("name") or "").lower())
-    )
+        avail: dict[str, Any] | None = None
+        if availability_index is not None:
+            avail = availability_index.get_by_name(user.get("name"))
+
+        # Apply max_avg_billed filter BEFORE appending — can drop a match.
+        if params.max_avg_billed is not None:
+            if avail is None or avail.get("avg_billed") is None:
+                continue
+            if avail["avg_billed"] > params.max_avg_billed:
+                continue
+
+        match = {
+            "user_id": uid,
+            "cv_id": user.get("cv_id"),
+            "name": user.get("name"),
+            "email": user.get("email"),
+            "matching_skills": sorted(
+                skill_name_by_id.get(sid, sid) for sid in matching_ids
+            ),
+            "matching_skill_ids": sorted(matching_ids),
+            "total_skills": len(user_skills),
+            "deactivated": user.get("deactivated"),
+        }
+        if params.include_availability:
+            if avail:
+                match["availability"] = {
+                    "months": avail["months"],
+                    "avg_billed": avail["avg_billed"],
+                    "avg_available": avail["avg_available"],
+                }
+            else:
+                match["availability"] = None
+        matches.append(match)
+
+    # Sort: if availability is a filter, prioritize most-available first,
+    # then fall back to strongest skill match. Otherwise match strength first.
+    def _avail_score(match: dict[str, Any]) -> float:
+        avail = match.get("availability")
+        if isinstance(avail, dict):
+            avg = avail.get("avg_billed")
+            if isinstance(avg, (int, float)):
+                return float(avg)  # lower = more available = ranks higher
+        return float("inf")  # no availability data sinks to the bottom
+
+    if params.max_avg_billed is not None:
+        matches.sort(
+            key=lambda m: (
+                _avail_score(m),
+                -len(m["matching_skills"]),
+                -m["total_skills"],
+                (m.get("name") or "").lower(),
+            )
+        )
+    else:
+        matches.sort(
+            key=lambda m: (
+                -len(m["matching_skills"]),
+                -m["total_skills"],
+                (m.get("name") or "").lower(),
+            )
+        )
     truncated = matches[: params.max_results]
+
+    # Per-input resolution summary for transparency.
+    resolution_summary = []
+    for original, ids in per_input.items():
+        names = sorted(
+            {skill_name_by_id.get(sid, sid) for sid in ids}
+        )
+        resolution_summary.append(
+            {"input": original, "resolved_count": len(ids), "resolved_names": names}
+        )
 
     if params.response_format == ResponseFormat.JSON:
         return json.dumps(
             {
                 "scope": scope_label,
+                "match_mode": params.match_mode.value,
+                "match_all": params.match_all,
                 "requested_skills": params.skills,
-                "resolved_skill_ids": resolved_skill_ids,
+                "resolved_skill_ids": resolved_ids,
+                "resolution_by_input": resolution_summary,
                 "unresolved_inputs": unresolved,
                 "total_matches": len(matches),
                 "returned": len(truncated),
@@ -880,22 +1012,37 @@ async def flowcase_find_users_by_skill(params: FindUsersBySkillInput) -> str:
         )
 
     # Markdown
-    resolved_names = sorted(
-        {skill_name_by_id.get(sid, sid) for sid in resolved_skill_ids}
-    )
     lines: list[str] = [
         f"# Skill search — scope: {scope_label}",
         "",
         f"- Requested: {', '.join(params.skills)}",
-        f"- Resolved to {len(resolved_skill_ids)} skill(s): "
-        f"{', '.join(resolved_names[:10])}"
-        + (" …" if len(resolved_names) > 10 else ""),
+        f"- match_mode: `{params.match_mode.value}`"
+        + (" | match_all: true (AND)" if params.match_all else " | match_all: false (OR)"),
     ]
+
+    for entry in resolution_summary:
+        names_preview = entry["resolved_names"][:5]
+        suffix = (
+            f" (+{len(entry['resolved_names']) - 5} more)"
+            if len(entry["resolved_names"]) > 5
+            else ""
+        )
+        lines.append(
+            f"  - `{entry['input']}` → {entry['resolved_count']} skill(s): "
+            f"{', '.join(names_preview)}{suffix}"
+        )
+
+    if len(resolved_ids) > 20:
+        lines.append(
+            f"- ⚠ Resolved {len(resolved_ids)} skill IDs in total — query "
+            f"may be too broad. Consider match_mode='exact' or a skill_id."
+        )
+
     if unresolved:
         lines.append(f"- **Unresolved inputs**: {unresolved}")
+    lines.append("")
     lines.append(
-        f"- **{len(matches)} matching users** "
-        f"(showing {len(truncated)})"
+        f"**{len(matches)} matching users** (showing {len(truncated)})"
     )
     lines.append("")
 
@@ -913,6 +1060,24 @@ async def flowcase_find_users_by_skill(params: FindUsersBySkillInput) -> str:
             f"{', '.join(m['matching_skills'])}"
         )
         lines.append(f"- Total skills on CV: {m['total_skills']}")
+        avail = m.get("availability")
+        if isinstance(avail, dict):
+            avg_b = avail.get("avg_billed")
+            avg_a = avail.get("avg_available")
+            months = avail.get("months") or {}
+            parts = [
+                f"{k[:3].capitalize()}: {int(round(v * 100))}%"
+                for k, v in months.items()
+                if isinstance(v, (int, float))
+            ]
+            if avg_b is not None and avg_a is not None:
+                lines.append(
+                    f"- **Availability**: {int(round(avg_a * 100))}% avg available "
+                    f"({int(round(avg_b * 100))}% avg billed) — "
+                    f"{', '.join(parts)}"
+                )
+        elif params.include_availability:
+            lines.append("- Availability: _no match in workbook_")
         lines.append("")
 
     if len(matches) > len(truncated):
@@ -921,3 +1086,144 @@ async def flowcase_find_users_by_skill(params: FindUsersBySkillInput) -> str:
             f"Increase max_results or narrow skills._"
         )
     return "\n".join(lines).strip()
+
+
+# ---------------------------------------------------------------------------
+# flowcase_get_availability
+# ---------------------------------------------------------------------------
+
+
+class GetAvailabilityInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+    name: Optional[str] = Field(
+        default=None,
+        description=(
+            "Consultant display name (as it appears in Flowcase / the "
+            "availability workbook). Case- and whitespace-insensitive, "
+            "tolerant of token order."
+        ),
+    )
+    user_id: Optional[str] = Field(
+        default=None,
+        description=(
+            "Flowcase user_id. The tool looks up the user's name via "
+            "the data export and then resolves availability by name."
+        ),
+    )
+    email: Optional[str] = Field(
+        default=None,
+        description="Atea email. Used to look up the user, then match by name.",
+    )
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN)
+
+    @model_validator(mode="after")
+    def _require_one_identifier(self) -> "GetAvailabilityInput":
+        if not (self.name or self.user_id or self.email):
+            raise ValueError(
+                "Provide at least one of: 'name', 'user_id', or 'email'."
+            )
+        return self
+
+
+@mcp.tool(
+    name="flowcase_get_availability",
+    annotations={
+        "title": "Get a consultant's monthly availability / billing rate",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    },
+)
+async def flowcase_get_availability(params: GetAvailabilityInput) -> str:
+    """Look up a consultant's monthly billing rates.
+
+    Data comes from the availability workbook (PowerBI export) at
+    ``FLOWCASE_AVAILABILITY_PATH``. Matching is done on the consultant's
+    display name (case- and token-order-insensitive).
+
+    Given a ``user_id`` or ``email``, the tool first resolves the name via
+    Flowcase (``/data_export/users`` or ``/users/find``) and then looks up
+    availability by that name. Given just a ``name``, it skips Flowcase
+    entirely.
+    """
+    client = _get_client()
+    target_name: str | None = params.name
+    flowcase_user: dict[str, Any] | None = None
+
+    if not target_name and params.email:
+        try:
+            data = await client.get("/users/find", params={"email": params.email})
+        except Exception as e:
+            return f"Error: {format_http_error(e)}"
+        rec = data[0] if isinstance(data, list) and data else data
+        if isinstance(rec, dict):
+            flowcase_user = rec
+            target_name = rec.get("name")
+
+    if not target_name and params.user_id:
+        try:
+            users = await client.get_all_users_via_data_export()
+        except Exception as e:
+            return f"Error: {format_http_error(e)}"
+        for u in users:
+            if u.get("id") == params.user_id:
+                flowcase_user = u
+                target_name = u.get("name")
+                break
+
+    if not target_name:
+        return (
+            "Could not resolve a display name for the given identifier. "
+            "Check the user_id or email, or pass 'name' directly."
+        )
+
+    index = get_default_index()
+    if not index.available():
+        return (
+            f"Availability workbook is empty or missing at {index.path}. "
+            f"Set FLOWCASE_AVAILABILITY_PATH or drop the xlsx there."
+        )
+
+    record = index.get_by_name(target_name)
+    if not record:
+        return (
+            f"No availability data for '{target_name}'. "
+            f"The workbook may not include this consultant, or the display "
+            f"name differs between Flowcase and the export."
+        )
+
+    payload = {
+        "name": target_name,
+        "user_id": (flowcase_user or {}).get("id")
+        or (flowcase_user or {}).get("user_id"),
+        "cv_id": (flowcase_user or {}).get("cv_id")
+        or (flowcase_user or {}).get("default_cv_id"),
+        "months": record["months"],
+        "avg_billed": record["avg_billed"],
+        "avg_available": record["avg_available"],
+    }
+
+    if params.response_format == ResponseFormat.JSON:
+        return json.dumps(payload, indent=2, ensure_ascii=False)
+
+    avg_b = payload["avg_billed"]
+    avg_a = payload["avg_available"]
+    lines = [f"# {target_name}"]
+    if payload["user_id"]:
+        lines.append(f"- user_id: `{payload['user_id']}`")
+    if payload["cv_id"]:
+        lines.append(f"- cv_id: `{payload['cv_id']}`")
+    if avg_b is not None and avg_a is not None:
+        lines.append(
+            f"- **Average**: {int(round(avg_a * 100))}% available "
+            f"({int(round(avg_b * 100))}% billed)"
+        )
+    lines.append("")
+    lines.append("## Monthly billing rate")
+    for month, rate in (payload["months"] or {}).items():
+        if isinstance(rate, (int, float)):
+            lines.append(f"- {month.capitalize()}: {int(round(rate * 100))}%")
+        else:
+            lines.append(f"- {month.capitalize()}: _n/a_")
+    return "\n".join(lines)

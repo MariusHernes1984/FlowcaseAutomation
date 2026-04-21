@@ -18,7 +18,10 @@ DEFAULT_COUNTRY = "no"
 COUNTRIES_CACHE_TTL = 3600.0   # 1 hour — countries/offices change rarely
 SKILLS_CACHE_TTL = 3600.0      # 1 hour — skill taxonomy changes rarely
 DATA_EXPORT_CACHE_TTL = 600.0  # 10 minutes — CVs can update during a session
-BULK_SCAN_PAGE_DELAY = 0.15    # Small delay between paginated pages to be polite
+BULK_SCAN_PAGE_DELAY = 0.3     # Delay between paginated pages to respect rate limits
+MAX_RETRIES = 5                # Retry attempts on 429/timeouts
+INITIAL_BACKOFF = 2.0          # Seconds for first retry; doubles each attempt
+MAX_RETRY_AFTER_SECONDS = 30.0 # Cap honoring the server's Retry-After header
 
 OBJECT_ID_RE = re.compile(r"^[0-9a-f]{24}$", re.IGNORECASE)
 
@@ -82,11 +85,11 @@ class FlowcaseClient:
         path: str,
         params: dict[str, Any] | list[tuple[str, Any]] | None = None,
         *,
-        max_retries: int = 3,
+        max_retries: int = MAX_RETRIES,
     ) -> Any:
         """GET with retry on HTTP 429 (rate limit) and timeouts."""
         url = f"{self._base_url}{path}"
-        backoff = 1.0
+        backoff = INITIAL_BACKOFF
         last_exc: Exception | None = None
         for attempt in range(max_retries + 1):
             try:
@@ -97,7 +100,7 @@ class FlowcaseClient:
                     if response.status_code == 429 and attempt < max_retries:
                         retry_after = response.headers.get("Retry-After")
                         wait_s = float(retry_after) if retry_after else backoff
-                        await asyncio.sleep(min(wait_s, 10.0))
+                        await asyncio.sleep(min(wait_s, MAX_RETRY_AFTER_SECONDS))
                         backoff *= 2
                         continue
                     response.raise_for_status()
@@ -229,18 +232,29 @@ class FlowcaseClient:
         inputs: list[str],
         *,
         lang: str = "no",
-    ) -> tuple[list[str], list[str]]:
+        match_mode: str = "exact",
+    ) -> tuple[list[str], list[str], dict[str, list[str]]]:
         """Resolve skill names/IDs to canonical skill IDs.
 
-        Each input is treated as an ID if it matches the 24-char hex pattern;
-        otherwise it's matched case-insensitively against any language value
-        in the skill taxonomy (substring match — "python" matches "Python",
-        "Python 2", "Python 3").
+        Each input is treated as an ID if it matches the 24-char hex pattern.
+        Otherwise it's matched against language variants in the skill
+        taxonomy according to ``match_mode``:
 
-        Returns ``(resolved_ids, unresolved_inputs)``.
+        * ``"exact"`` — case-insensitive equality (default; tightest)
+        * ``"prefix"`` — label starts with the query
+        * ``"substring"`` — label contains the query (loosest)
+
+        Returns ``(resolved_ids, unresolved_inputs, per_input_matches)`` where
+        ``per_input_matches`` maps each original name query to the list of
+        resolved skill IDs so callers can expand/report per input.
         """
+        mode = (match_mode or "exact").lower()
+        if mode not in {"exact", "prefix", "substring"}:
+            mode = "exact"
+
         resolved: list[str] = []
         unresolved: list[str] = []
+        per_input: dict[str, list[str]] = {}
         name_queries: list[tuple[str, str]] = []
 
         for raw in inputs:
@@ -249,6 +263,7 @@ class FlowcaseClient:
                 continue
             if OBJECT_ID_RE.match(text):
                 resolved.append(text.lower())
+                per_input[text] = [text.lower()]
             else:
                 name_queries.append((text, text.lower()))
 
@@ -264,9 +279,20 @@ class FlowcaseClient:
                     if not isinstance(values, dict):
                         continue
                     for label in values.values():
-                        if isinstance(label, str) and lowered in label.strip().lower():
+                        if not isinstance(label, str):
+                            continue
+                        stripped = label.strip().lower()
+                        if not stripped:
+                            continue
+                        hit = (
+                            (mode == "exact" and stripped == lowered)
+                            or (mode == "prefix" and stripped.startswith(lowered))
+                            or (mode == "substring" and lowered in stripped)
+                        )
+                        if hit:
                             matches.append(sid)
                             break
+                per_input[original] = matches
                 if matches:
                     resolved.extend(matches)
                 else:
@@ -278,7 +304,7 @@ class FlowcaseClient:
             if sid not in seen:
                 seen.add(sid)
                 deduped.append(sid)
-        return deduped, unresolved
+        return deduped, unresolved, per_input
 
     # ------------------------------------------------------------------
     # data_export/users bulk scan

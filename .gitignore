@@ -51,3 +51,10 @@ htmlcov/
 
 # Logs
 *.log
+
+# Claude Code local settings (personal overrides, not for sharing)
+.claude/settings.local.json
+
+# Availability data (sensitive — billing rates per consultant)
+data/availability.xlsx
+data/*.xlsx

@@ -71,7 +71,8 @@ launches the server from.
 | `flowcase_find_user` | Look up a single user by email or Atea domain username |
 | `flowcase_get_cv` | Fetch a CV — compact by section, `verbose=true` for full raw data |
 | `flowcase_list_skills` | Browse the skill taxonomy (name + ID) |
-| `flowcase_find_users_by_skill` | Find consultants matching one or more skills |
+| `flowcase_find_users_by_skill` | Find consultants matching one or more skills (optionally filtered by availability) |
+| `flowcase_get_availability` | Monthly billing rate for a single consultant |
 
 All tools support `response_format="markdown"` (default) or `"json"`.
 
@@ -82,9 +83,65 @@ All tools support `response_format="markdown"` (default) or `"json"`.
 2. `flowcase_get_cv(user_id, cv_id)` → compact CV summary
 
 ### Find consultants by skill (Norway by default)
-1. `flowcase_list_skills(query="python")` → verify the skill name / get ID
-2. `flowcase_find_users_by_skill(skills=["python"])` → list of matching consultants (scoped to default country)
-3. `flowcase_get_cv(user_id, cv_id)` for any candidate of interest
+
+**Precise lookup (recommended):**
+1. `flowcase_list_skills(query="azure")` → browse taxonomy, note exact names / IDs
+2. `flowcase_find_users_by_skill(skills=["Microsoft Azure"])` → exact match by default
+3. `flowcase_get_cv(user_id, cv_id)` for each candidate
+
+**Combine multiple skills (AND):**
+```
+flowcase_find_users_by_skill(
+  skills=["Microsoft Azure", "Terraform"],
+  match_all=true
+)
+```
+
+**Explore broadly:**
+```
+flowcase_find_users_by_skill(
+  skills=["azure"],
+  match_mode="substring"   # matches Azure AD, Azure AI, etc.
+)
+```
+
+### Match modes
+
+| Mode | Behavior | Example |
+|---|---|---|
+| `exact` (default) | Case-insensitive equality | `"Python"` → only "Python" |
+| `prefix` | Starts-with match | `"Python"` → Python, Python 2, Python 3 |
+| `substring` | Contains match (broadest) | `"python"` → + IronPython, CPython |
+
+Raw skill IDs (24-char hex) always bypass name matching and work in any mode.
+
+### Availability (consultant capacity)
+
+The server can enrich skill-search results with monthly billing rates
+from a PowerBI export (the "PBI KONsulent.xlsx" workbook). Place the
+file at `data/availability.xlsx` or set `FLOWCASE_AVAILABILITY_PATH`.
+The file auto-reloads when its mtime changes — no restart required.
+
+**Filter by availability:**
+```
+flowcase_find_users_by_skill(
+  skills=["Microsoft Azure", "Terraform"],
+  match_all=true,
+  max_avg_billed=0.6    # only return people ≤60% booked on avg
+)
+```
+Results are sorted by availability (most available first) when this
+filter is set.
+
+**Direct lookup:**
+```
+flowcase_get_availability(name="Aaron Jimenez")
+flowcase_get_availability(email="aaron.jimenez@atea.no")
+flowcase_get_availability(user_id="5c4a...")
+```
+
+Matching is by display name (case- and token-order-insensitive). If a
+consultant isn't in the workbook, the tool returns a clear message.
 
 ### Browse by office
 1. `flowcase_list_offices(country_codes=["no"])` → office IDs
