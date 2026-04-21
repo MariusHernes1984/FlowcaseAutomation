@@ -545,8 +545,11 @@ resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
               value: cosmosDb.name
             }
             {
+              // kateecosystem-resource hosts gpt-5.4-mini and Claude 4.6
+              // family, so we point the orchestrator there. Sweden Central
+              // is still EU for data residency.
               name: 'AZURE_OPENAI_ENDPOINT'
-              value: 'https://foundry-test-kate.cognitiveservices.azure.com/'
+              value: 'https://kateecosystem-resource.cognitiveservices.azure.com/'
             }
             {
               name: 'AZURE_OPENAI_API_KEY'
@@ -554,7 +557,7 @@ resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
             }
             {
               name: 'DEFAULT_LLM_DEPLOYMENT'
-              value: 'gpt-4.1'
+              value: 'gpt-5.4-mini'
             }
             {
               name: 'MCP_URL'

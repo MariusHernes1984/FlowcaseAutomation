@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     azure_openai_endpoint: str = ""
     azure_openai_api_key: str = ""
     azure_openai_api_version: str = "2024-10-21"
-    default_llm_deployment: str = "gpt-4.1"
+    default_llm_deployment: str = "gpt-5.4-mini"
 
     # -- Flowcase MCP (remote streamable-HTTP) -----------------------------
     mcp_url: str = ""

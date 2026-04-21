@@ -36,7 +36,7 @@ class Agent(BaseModel):
     description: str
     system_prompt: str
     model: str = Field(
-        default="gpt-4.1",
+        default="gpt-5.4-mini",
         description="Azure OpenAI deployment name.",
     )
     allowed_tools: list[str] = Field(
@@ -59,7 +59,7 @@ class AgentCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     description: str = Field(max_length=500)
     system_prompt: str = Field(min_length=1)
-    model: str = "gpt-4.1"
+    model: str = "gpt-5.4-mini"
     allowed_tools: list[str] = Field(default_factory=lambda: ["*"])
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int | None = None

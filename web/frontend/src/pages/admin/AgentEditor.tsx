@@ -101,7 +101,7 @@ export default function AgentEditor({
               id="agent-model"
               value={draft.model}
               onChange={(e) => setDraft({ ...draft, model: e.target.value })}
-              placeholder="gpt-4.1"
+              placeholder="gpt-5.4-mini"
               className="mt-1"
             />
           </div>
