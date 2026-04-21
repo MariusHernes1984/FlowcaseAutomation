@@ -14,6 +14,7 @@ from flowcase_web.agents import ensure_seed_agents
 from flowcase_web.agents import router as agents_router
 from flowcase_web.auth import router as auth_router
 from flowcase_web.auth.bootstrap import ensure_admin
+from flowcase_web.chats import router as chats_router
 from flowcase_web.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -54,8 +55,7 @@ def create_app() -> FastAPI:
 
     app.include_router(auth_router, prefix="/auth", tags=["auth"])
     app.include_router(agents_router, prefix="/agents", tags=["agents"])
-
-    # TODO(phase-2c): chat router once MCP + LLM wiring is in place
+    app.include_router(chats_router, prefix="/chats", tags=["chats"])
     return app
 
 
