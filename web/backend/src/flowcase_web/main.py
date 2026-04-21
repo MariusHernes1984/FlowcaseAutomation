@@ -1,25 +1,35 @@
-"""FastAPI entry point.
-
-Stage-1 scaffolding: only a ``/health`` endpoint so the image builds and
-deploys cleanly. Routers for ``/auth``, ``/agents``, ``/chat`` are added
-in the next iteration.
-"""
+"""FastAPI entry point — wires auth, agents and (later) chat routers."""
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from flowcase_web import storage
+from flowcase_web.agents import ensure_seed_agents
+from flowcase_web.agents import router as agents_router
+from flowcase_web.auth import router as auth_router
+from flowcase_web.auth.bootstrap import ensure_admin
 from flowcase_web.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Placeholder for Cosmos client init + admin bootstrap.
+    settings = get_settings()
+    handle = await storage.connect(settings)
+    try:
+        await ensure_admin(handle, settings)
+        await ensure_seed_agents(handle)
+    except Exception:
+        logger.exception("Startup bootstrap failed — app will keep running")
     yield
+    await storage.close()
 
 
 def create_app() -> FastAPI:
@@ -42,10 +52,10 @@ def create_app() -> FastAPI:
     async def healthcheck() -> dict[str, str]:
         return {"status": "ok", "env": settings.environment}
 
-    # TODO(phase-2): register auth/agents/chat routers
-    # from flowcase_web.auth.router import router as auth_router
-    # app.include_router(auth_router, prefix="/auth", tags=["auth"])
+    app.include_router(auth_router, prefix="/auth", tags=["auth"])
+    app.include_router(agents_router, prefix="/agents", tags=["agents"])
 
+    # TODO(phase-2c): chat router once MCP + LLM wiring is in place
     return app
 
 

@@ -1,1 +1,5 @@
-"""Local user/password auth (bcrypt + JWT). Phase-2 implementation."""
+"""Local user/password auth (bcrypt + JWT)."""
+
+from flowcase_web.auth.router import router
+
+__all__ = ["router"]

@@ -177,6 +177,87 @@ resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-0
 }
 
 // ---------------------------------------------------------------------------
+// Cosmos DB — serverless SQL API for web-app state
+// (users, agents, chat history — all PII kept in Norway East)
+// ---------------------------------------------------------------------------
+resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
+  name: 'cosmos-${suffix}'
+  location: location
+  kind: 'GlobalDocumentDB'
+  properties: {
+    databaseAccountOfferType: 'Standard'
+    locations: [
+      {
+        locationName: location
+        failoverPriority: 0
+        isZoneRedundant: false
+      }
+    ]
+    capabilities: [
+      {
+        name: 'EnableServerless'
+      }
+    ]
+    disableLocalAuth: false
+    publicNetworkAccess: 'Enabled'
+    minimalTlsVersion: 'Tls12'
+  }
+}
+
+resource cosmosDb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-05-15' = {
+  parent: cosmos
+  name: 'flowcase'
+  properties: {
+    resource: {
+      id: 'flowcase'
+    }
+  }
+}
+
+resource cosmosUsers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = {
+  parent: cosmosDb
+  name: 'users'
+  properties: {
+    resource: {
+      id: 'users'
+      partitionKey: {
+        paths: ['/id']
+        kind: 'Hash'
+      }
+    }
+  }
+}
+
+resource cosmosAgents 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = {
+  parent: cosmosDb
+  name: 'agents'
+  properties: {
+    resource: {
+      id: 'agents'
+      partitionKey: {
+        paths: ['/id']
+        kind: 'Hash'
+      }
+    }
+  }
+}
+
+resource cosmosChats 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = {
+  parent: cosmosDb
+  name: 'chats'
+  properties: {
+    resource: {
+      id: 'chats'
+      partitionKey: {
+        // Partition by user so each user's history lives together.
+        paths: ['/userId']
+        kind: 'Hash'
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Container Apps Environment + storage link for file share
 // ---------------------------------------------------------------------------
 resource env 'Microsoft.App/managedEnvironments@2024-03-01' = {
@@ -350,3 +431,6 @@ output fileShareName string = fileShare.name
 output containerAppName string = app.name
 output containerAppFqdn string = app.properties.configuration.ingress.fqdn
 output identityClientId string = identity.properties.clientId
+output cosmosAccountName string = cosmos.name
+output cosmosEndpoint string = cosmos.properties.documentEndpoint
+output cosmosDatabaseName string = cosmosDb.name
