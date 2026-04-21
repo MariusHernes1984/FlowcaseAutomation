@@ -1,0 +1,34 @@
+.git/
+.gitignore
+.github/
+.claude/
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.log
+
+# Never ship secrets or data into the image
+.env
+.env.*
+!.env.example
+data/
+tests/
+docs/
+infra/
+
+# MCP / IDE / OS junk
+.mcp.json
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
