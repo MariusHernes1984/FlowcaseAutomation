@@ -33,8 +33,14 @@ param location string = 'norwayeast'
 @description('Object ID of the user who should be able to read secrets (for setting them post-deploy)')
 param principalId string
 
-@description('Placeholder image until a real one is pushed to ACR')
+@description('Placeholder image used for bootstrap. Once ACR has real images, pass them via mcpImage / webImage to avoid reverting.')
 param initialImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+
+@description('MCP container image. Override on re-deploys so Bicep does not revert to placeholder.')
+param mcpImage string = initialImage
+
+@description('Web orchestrator container image. Override on re-deploys so Bicep does not revert to placeholder.')
+param webImage string = initialImage
 
 @description('Container CPU cores (0.25 is plenty for a single-user MCP)')
 param containerCpu string = '0.25'
@@ -335,7 +341,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
       containers: [
         {
           name: 'flowcase-mcp'
-          image: initialImage
+          image: mcpImage
           resources: {
             cpu: json(containerCpu)
             memory: containerMemory
@@ -502,7 +508,7 @@ resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
       containers: [
         {
           name: 'flowcase-web'
-          image: initialImage
+          image: webImage
           resources: {
             cpu: json(containerCpu)
             memory: containerMemory
