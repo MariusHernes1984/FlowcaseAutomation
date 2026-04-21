@@ -1,0 +1,3182 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "Flowcase",
+        "description": "Proxy API towards Flowcase instance.",
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "https://servicehub.atea.com/flowcase"
+        }
+    ],
+    "paths": {
+        "/countries": {
+            "get": {
+                "summary": "Get Country and Office Ids",
+                "description": "Get the list of COUNTRY_IDs and OFFICE_IDs",
+                "operationId": "get-country-and-office-ids",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Countries"
+                                },
+                                "example": [
+                                    {
+                                        "_id": "string",
+                                        "code": "string",
+                                        "selected": false,
+                                        "native_language_code": "string",
+                                        "cv_template_id": "string",
+                                        "cv_template_type": "string",
+                                        "offices": [
+                                            {
+                                                "_id": "string",
+                                                "name": "string",
+                                                "selected": false,
+                                                "cv_template_id": "string",
+                                                "cv_template_type": "string",
+                                                "country_id": "string",
+                                                "country_code": "string",
+                                                "num_users": 0
+                                            }
+                                        ],
+                                        "setting": {
+                                            "_id": "string"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "summary": "Get list of users",
+                "description": "Retrieve list of users. Default/max limit is 100, use offset parameter to fetch next bulk of users.",
+                "operationId": "get-list-of-users",
+                "parameters": [
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.\n",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Limit amount of returned objects. Default/max limit is 100",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Users"
+                                },
+                                "example": [
+                                    {
+                                        "user_id": "string",
+                                        "_id": "string",
+                                        "id": "string",
+                                        "company_id": "string",
+                                        "company_name": "string",
+                                        "company_subdomains": [
+                                            "string"
+                                        ],
+                                        "company_group_ids": [
+                                            "Generic array"
+                                        ],
+                                        "email": "string",
+                                        "external_unique_id": "string",
+                                        "deactivated": false,
+                                        "deactivated_at": false,
+                                        "created_at": "string",
+                                        "updated_at": "string",
+                                        "role": "string",
+                                        "roles": [
+                                            "string"
+                                        ],
+                                        "role_allowed_office_ids": [
+                                            "Generic array"
+                                        ],
+                                        "role_allowed_tag_ids": [
+                                            "Generic array"
+                                        ],
+                                        "office_id": "string",
+                                        "office_name": "string",
+                                        "country_id": "string",
+                                        "country_code": "string",
+                                        "language_code": "string",
+                                        "language_codes": [
+                                            "string"
+                                        ],
+                                        "international_toggle": "string",
+                                        "preferred_download_format": "string",
+                                        "masterdata_languages": [
+                                            "string"
+                                        ],
+                                        "expand_proposals_toggle": false,
+                                        "selected_office_ids": [
+                                            "Generic array"
+                                        ],
+                                        "include_officeless_reference_projects": false,
+                                        "selected_tag_ids": [
+                                            "Generic array"
+                                        ],
+                                        "default_cv_template_id": "string",
+                                        "image": {
+                                            "thumb": {},
+                                            "fit_thumb": {},
+                                            "large": {},
+                                            "small_thumb": {}
+                                        },
+                                        "name": "string",
+                                        "telephone": "string",
+                                        "default_cv_id": "string"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create new user",
+                "description": "Create new user",
+                "operationId": "create-new-user",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "example": "{\r\nuser: {\r\ncountry_id: \"COUNTRY_ID\",\r\nemail: \"EMAIL_ADDRESS\",\r\nexternal_unique_id: \"EMPLOYEE_ID\",\r\nextra_roles: [roles], // optional\r\noffice_id: \"OFFICE_ID\",\r\nrole: \"consultant\",\r\nsend_email: false\r\n}\r\n}"
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "null"
+                    }
+                }
+            }
+        },
+        "/users/find": {
+            "get": {
+                "summary": "Get user",
+                "description": "Find user by email or domain user-name",
+                "operationId": "get-user",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "description": "Provide valid email of the user.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "external_unique_id",
+                        "in": "query",
+                        "description": "Provide users ATEA domain username.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Users"
+                                },
+                                "example": [
+                                    {
+                                        "user_id": "string",
+                                        "_id": "string",
+                                        "id": "string",
+                                        "company_id": "string",
+                                        "company_name": "string",
+                                        "company_subdomains": [
+                                            "string"
+                                        ],
+                                        "company_group_ids": [],
+                                        "email": "string",
+                                        "external_unique_id": "string",
+                                        "upn": {},
+                                        "deactivated": true,
+                                        "deactivated_at": true,
+                                        "created_at": "string",
+                                        "updated_at": "string",
+                                        "role": "string",
+                                        "roles": [
+                                            "string"
+                                        ],
+                                        "role_allowed_office_ids": [],
+                                        "role_allowed_tag_ids": [],
+                                        "office_id": "string",
+                                        "office_name": "string",
+                                        "country_id": "string",
+                                        "country_code": "string",
+                                        "language_code": "string",
+                                        "language_codes": [
+                                            "string"
+                                        ],
+                                        "international_toggle": "string",
+                                        "preferred_download_format": "string",
+                                        "masterdata_languages": [
+                                            "string"
+                                        ],
+                                        "expand_proposals_toggle": true,
+                                        "selected_office_ids": [],
+                                        "include_officeless_reference_projects": true,
+                                        "selected_tag_ids": [],
+                                        "override_language_code": {},
+                                        "default_cv_template_id": "string",
+                                        "image": {
+                                            "url": {},
+                                            "thumb": {
+                                                "url": {}
+                                            },
+                                            "fit_thumb": {
+                                                "url": {}
+                                            },
+                                            "large": {
+                                                "url": {}
+                                            },
+                                            "small_thumb": {
+                                                "url": {}
+                                            }
+                                        },
+                                        "name": "string",
+                                        "telephone": "string",
+                                        "default_cv_id": "string"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/cvs/{userId}/{cvId}": {
+            "get": {
+                "summary": "Get CV for user",
+                "description": "Retrieve user CV by suppling user_id and default_cv_id values, which are stored in user details.",
+                "operationId": "get-cv-for-user",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "Flowcase user Id (user_id)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cvId",
+                        "in": "path",
+                        "description": "Flowcase CV Id (default_cv_id)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CV"
+                                },
+                                "example": {
+                                    "_id": "string",
+                                    "born_day": 0,
+                                    "born_month": 0,
+                                    "born_year": 0,
+                                    "bruker_id": "string",
+                                    "certifications": [
+                                        {
+                                            "_id": "string",
+                                            "created_at": "string",
+                                            "disabled": false,
+                                            "diverged_from_master": false,
+                                            "long_description": {},
+                                            "month": "string",
+                                            "month_expire": "string",
+                                            "name": {
+                                                "dk": "string"
+                                            },
+                                            "order": 0,
+                                            "organiser": {
+                                                "dk": "string",
+                                                "int": "string",
+                                                "no": "string",
+                                                "se": "string"
+                                            },
+                                            "recently_added": false,
+                                            "starred": false,
+                                            "updated_at": "string",
+                                            "version": 0,
+                                            "year": "string",
+                                            "year_expire": "string",
+                                            "attachments": [
+                                                "Generic array"
+                                            ]
+                                        }
+                                    ],
+                                    "courses": [
+                                        {
+                                            "_id": "string",
+                                            "created_at": "string",
+                                            "disabled": false,
+                                            "diverged_from_master": false,
+                                            "long_description": {},
+                                            "month": "string",
+                                            "name": {
+                                                "dk": "string"
+                                            },
+                                            "order": 0,
+                                            "program": {},
+                                            "recently_added": false,
+                                            "starred": false,
+                                            "updated_at": "string",
+                                            "version": 0,
+                                            "year": "string",
+                                            "attachments": [
+                                                "Generic array"
+                                            ]
+                                        }
+                                    ],
+                                    "created_at": "string",
+                                    "custom_tag_ids": [
+                                        "string"
+                                    ],
+                                    "default": false,
+                                    "educations": [
+                                        {
+                                            "_id": "string",
+                                            "created_at": "string",
+                                            "degree": {
+                                                "dk": "string"
+                                            },
+                                            "description": {},
+                                            "disabled": false,
+                                            "diverged_from_master": false,
+                                            "month_from": "string",
+                                            "month_to": "string",
+                                            "order": 0,
+                                            "recently_added": false,
+                                            "school": {
+                                                "dk": "string"
+                                            },
+                                            "starred": false,
+                                            "updated_at": "string",
+                                            "version": 0,
+                                            "year_from": "string",
+                                            "year_to": "string",
+                                            "attachments": [
+                                                "Generic array"
+                                            ]
+                                        }
+                                    ],
+                                    "highlighted_roles": [
+                                        "Generic array"
+                                    ],
+                                    "key_qualifications": [
+                                        {
+                                            "_id": "string",
+                                            "created_at": "string",
+                                            "disabled": false,
+                                            "diverged_from_master": false,
+                                            "label": {
+                                                "dk": "string"
+                                            },
+                                            "long_description": {
+                                                "dk": "string"
+                                            },
+                                            "order": 0,
+                                            "recently_added": false,
+                                            "starred": false,
+                                            "tag_line": {},
+                                            "updated_at": "string",
+                                            "version": 0
+                                        }
+                                    ],
+                                    "languages": [
+                                        {
+                                            "_id": "string",
+                                            "created_at": "string",
+                                            "disabled": false,
+                                            "diverged_from_master": false,
+                                            "level": {
+                                                "dk": "string"
+                                            },
+                                            "name": {
+                                                "dk": "string"
+                                            },
+                                            "order": 0,
+                                            "recently_added": false,
+                                            "starred": false,
+                                            "updated_at": "string",
+                                            "version": 0
+                                        }
+                                    ],
+                                    "name_multilang": {},
+                                    "nationality": {},
+                                    "navn": "string",
+                                    "place_of_residence": {
+                                        "dk": "string"
+                                    },
+                                    "project_experiences": [
+                                        {
+                                            "_id": "string",
+                                            "created_at": "string",
+                                            "customer": {
+                                                "dk": "string",
+                                                "int": "string"
+                                            },
+                                            "customer_anonymized": {},
+                                            "customer_description": {
+                                                "int": "string",
+                                                "dk": "string"
+                                            },
+                                            "customer_selected": "string",
+                                            "customer_value_proposition": {
+                                                "int": "string",
+                                                "dk": "string"
+                                            },
+                                            "description": {
+                                                "dk": "string",
+                                                "int": "string"
+                                            },
+                                            "disabled": false,
+                                            "diverged_from_master": false,
+                                            "exclude_tags": [
+                                                "Generic array"
+                                            ],
+                                            "external_unique_id": "string",
+                                            "industry": {
+                                                "dk": "string"
+                                            },
+                                            "long_description": {
+                                                "int": "string",
+                                                "dk": "string"
+                                            },
+                                            "month_from": "string",
+                                            "month_to": "string",
+                                            "order": 0,
+                                            "project_experience_skills": [
+                                                {
+                                                    "_id": "string",
+                                                    "base_duration_in_years": 0,
+                                                    "offset_duration_in_years": 0,
+                                                    "order": 0,
+                                                    "proficiency": 0,
+                                                    "tags": {
+                                                        "dk": "string"
+                                                    },
+                                                    "total_duration_in_years": 0,
+                                                    "version": 0
+                                                }
+                                            ],
+                                            "project_type": {},
+                                            "recently_added": false,
+                                            "roles": [
+                                                {
+                                                    "_id": "string",
+                                                    "created_at": "string",
+                                                    "disabled": false,
+                                                    "diverged_from_master": false,
+                                                    "long_description": {
+                                                        "dk": "string"
+                                                    },
+                                                    "recently_added": false,
+                                                    "starred": false,
+                                                    "summary": {},
+                                                    "updated_at": "string",
+                                                    "version": 0
+                                                }
+                                            ],
+                                            "starred": false,
+                                            "updated_at": "string",
+                                            "version": 0,
+                                            "year_from": "string",
+                                            "year_to": "string",
+                                            "images": [
+                                                "Generic array"
+                                            ]
+                                        }
+                                    ],
+                                    "technologies": [
+                                        {
+                                            "_id": "string",
+                                            "category": {},
+                                            "created_at": "string",
+                                            "disabled": false,
+                                            "diverged_from_master": false,
+                                            "exclude_tags": [
+                                                "Generic array"
+                                            ],
+                                            "recently_added": false,
+                                            "starred": false,
+                                            "technology_skills": [
+                                                {
+                                                    "_id": "string",
+                                                    "base_duration_in_years": 0,
+                                                    "offset_duration_in_years": 0,
+                                                    "order": 0,
+                                                    "proficiency": 0,
+                                                    "tags": {
+                                                        "dk": "string"
+                                                    },
+                                                    "total_duration_in_years": 0,
+                                                    "version": 0
+                                                }
+                                            ],
+                                            "uncategorized": false,
+                                            "updated_at": "string",
+                                            "version": 0
+                                        }
+                                    ],
+                                    "telefon": "string",
+                                    "title": {
+                                        "dk": "string"
+                                    },
+                                    "updated_at": "string",
+                                    "version": 0,
+                                    "work_experiences": [
+                                        {
+                                            "_id": "string",
+                                            "created_at": "string",
+                                            "description": {
+                                                "dk": "string"
+                                            },
+                                            "disabled": false,
+                                            "diverged_from_master": false,
+                                            "employer": {
+                                                "dk": "string"
+                                            },
+                                            "long_description": {},
+                                            "month_from": "string",
+                                            "order": 0,
+                                            "recently_added": false,
+                                            "starred": false,
+                                            "updated_at": "string",
+                                            "version": 0,
+                                            "year_from": "string"
+                                        }
+                                    ],
+                                    "name": "string",
+                                    "user_id": "string",
+                                    "company_id": "string",
+                                    "external_unique_id": "string",
+                                    "email": "string",
+                                    "country_code": "string",
+                                    "language_code": "string",
+                                    "language_codes": [
+                                        "string"
+                                    ],
+                                    "custom_tags": [
+                                        {
+                                            "_id": "string",
+                                            "id": "string",
+                                            "values": {
+                                                "dk": "string",
+                                                "int": "string",
+                                                "no": "string",
+                                                "se": "string"
+                                            },
+                                            "external_unique_id": "string",
+                                            "custom_tag_category_id": "string",
+                                            "category_ids": [
+                                                "string"
+                                            ],
+                                            "custom_tag_category": {
+                                                "_id": "string",
+                                                "id": "string",
+                                                "values": {
+                                                    "dk": "string",
+                                                    "int": "string",
+                                                    "no": "string",
+                                                    "se": "string"
+                                                },
+                                                "external_unique_id": "string",
+                                                "can_be_used_for_cvs": false,
+                                                "can_be_used_for_references": false,
+                                                "can_be_used_for_customers": false,
+                                                "allow_filtering": false
+                                            }
+                                        }
+                                    ],
+                                    "updated_ago": "string",
+                                    "template_document_type": "string",
+                                    "default_word_template_id": "string",
+                                    "cv_roles": [
+                                        "Generic array"
+                                    ],
+                                    "image": {
+                                        "url": "string",
+                                        "thumb": {
+                                            "url": "string"
+                                        },
+                                        "fit_thumb": {
+                                            "url": "string"
+                                        },
+                                        "large": {
+                                            "url": "string"
+                                        },
+                                        "small_thumb": {
+                                            "url": "string"
+                                        }
+                                    },
+                                    "can_write": false
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/search": {
+            "get": {
+                "summary": "Search Users",
+                "description": "Search Users",
+                "operationId": "search-users",
+                "parameters": [
+                    {
+                        "name": "office_ids[]",
+                        "in": "query",
+                        "description": "Flowcase Office Id (office_id)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "Amount of objects to be returned.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Number of batches to skip",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SearchUsers"
+                                },
+                                "example": {
+                                    "cvs": [
+                                        {
+                                            "cv": {
+                                                "image": {
+                                                    "url": "string",
+                                                    "thumb": {
+                                                        "url": "string"
+                                                    },
+                                                    "fit_thumb": {
+                                                        "url": "string"
+                                                    },
+                                                    "large": {
+                                                        "url": "string"
+                                                    },
+                                                    "small_thumb": {
+                                                        "url": "string"
+                                                    }
+                                                },
+                                                "title": "string",
+                                                "titles": {
+                                                    "dk": "string"
+                                                },
+                                                "telephone": "string",
+                                                "email": "string",
+                                                "navn": "string",
+                                                "name": "string",
+                                                "name_multilang": {},
+                                                "bruker_id": "string",
+                                                "user_id": "string",
+                                                "company_id": "string",
+                                                "_id": "string",
+                                                "id": "string",
+                                                "updated_at": "string",
+                                                "updated_ago": "string",
+                                                "default_word_template_id": "string",
+                                                "country_code": "string",
+                                                "language_code": "string",
+                                                "language_codes": [
+                                                    "string"
+                                                ],
+                                                "template_document_type": "string"
+                                            },
+                                            "preview_url": "string",
+                                            "highlight": "string",
+                                            "index": 0,
+                                            "id": 0
+                                        }
+                                    ],
+                                    "facets": {},
+                                    "total": 0
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/masterdata/technologies/category": {
+            "get": {
+                "summary": "Get Approved (Masterdata) skill categories",
+                "description": "Retrieve Approved (Masterdata) skill categories",
+                "operationId": "get-approved-masterdata-skill-categories",
+                "parameters": [
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/masterdata/technologies/tags": {
+            "get": {
+                "summary": "Get Approved (Masterdata) skills",
+                "description": "Retrieve Approved (Masterdata) skills",
+                "operationId": "6246be3a8ef5855e5e31736d",
+                "parameters": [
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.\n",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Skills"
+                                },
+                                "example": [
+                                    {
+                                        "_id": "string",
+                                        "id": "string",
+                                        "section_type": "string",
+                                        "field_name": "string",
+                                        "values": {
+                                            "no": "string",
+                                            "se": "string"
+                                        },
+                                        "external_unique_id": {},
+                                        "help_text": {},
+                                        "category_ids": [
+                                            "string"
+                                        ],
+                                        "child_count": 0
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/unapproved/{Country}/technologies/category": {
+            "get": {
+                "summary": "Get Un-Approved (Masterdata) skill categories",
+                "description": "Retrieve Approved (Masterdata) skill categories",
+                "operationId": "6246bf7237d3366b72dfe168",
+                "parameters": [
+                    {
+                        "name": "Country",
+                        "in": "path",
+                        "description": "Provide two letter country code for necessary country. Use \"INT\" for for all.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.\n",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/unapprovedCategories"
+                                },
+                                "example": {
+                                    "wrapper": {
+                                        "terms": [
+                                            {
+                                                "term": "string",
+                                                "count": 0
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/unapproved/{Country}/technologies/tags": {
+            "get": {
+                "summary": "Get Un-Approved (Masterdata) skills",
+                "description": "Retrieve Approved (Masterdata) skills",
+                "operationId": "6246bffecaba773ca3d9c49f",
+                "parameters": [
+                    {
+                        "name": "Country",
+                        "in": "path",
+                        "description": "Provide two letter country code for necessary country. Use \"INT\" for for all.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.\n",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/unapprovedSkills"
+                                },
+                                "example": {
+                                    "wrapper": {
+                                        "terms": [
+                                            {
+                                                "term": "string",
+                                                "count": 0,
+                                                "matching_categories": [
+                                                    {
+                                                        "term": "string",
+                                                        "count": 0
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/data_export/{category}": {
+            "get": {
+                "summary": "Data export",
+                "description": "The data export API is an efficient API for exporting data. It will only return \"washed/cleaned\" data, that is data that matches official skills, industries etc. that you have defined in the Masterdata tool. It returns data in batches of 100. Each response contains a link to the next batch (if there are more). Customers and Users contains ids that refer to the ids of industries, skills etc. so that you should take into consideration that some of the data sets are dependent on other data sets.",
+                "operationId": "data-export",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "description": "Select Flowcase defined data export set. Valid values are only - industries, skills, customers, custom_tag_categories and users.",
+                        "required": true,
+                        "schema": {
+                            "enum": [
+                                "industries",
+                                "skills",
+                                "customers",
+                                "custom_tag_categories",
+                                "users"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.\n",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.\n",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/masterdata/custom_tags/custom_tag": {
+            "post": {
+                "summary": "Create new custom tags",
+                "description": "Create new custom tag",
+                "operationId": "create-new-custom-tags",
+                "responses": {
+                    "200": {
+                        "description": "null"
+                    }
+                }
+            }
+        },
+        "/countries/{countryId}/offices": {
+            "post": {
+                "summary": "Create new office",
+                "description": "Create new office under specific country",
+                "operationId": "create-new-office",
+                "parameters": [
+                    {
+                        "name": "countryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "null"
+                    }
+                }
+            }
+        },
+        "/users/{userId}": {
+            "put": {
+                "summary": "Update existing user",
+                "description": "Update existing user",
+                "operationId": "update-existing-user",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "Flowcase User Id value",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "null"
+                    }
+                }
+            }
+        },
+        "/users/{userId}/image": {
+            "post": {
+                "summary": "Update user profile picture",
+                "description": "Update user profile picture",
+                "operationId": "update-user-profile-picture",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "Flowcase user Id value",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "null"
+                    }
+                }
+            }
+        },
+        "/masterdata/custom_tags/custom_tag_category": {
+            "get": {
+                "summary": "Get Approved (Masterdata) custom tags",
+                "description": "Retrieve Approved (Masterdata) custom tags",
+                "operationId": "get-approved-masterdata-custom-tags",
+                "parameters": [
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.",
+                        "schema": {
+                            "type": "int"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Default/max limit is 100, use offset parameter to fetch next bulk of users.",
+                        "schema": {
+                            "type": "int"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "null"
+                    }
+                }
+            }
+        },
+        "/cv-report": {
+            "post": {
+                "summary": "Initiate Report Request",
+                "description": "The CV report can be generated using the following steps:\n1. Retrieve Office IDs\n2. Initiate the report using this endpoint and note report Id.\n3. Poll the report status until complete by using endpoint - Retrieve Report Request with noted report Id.\n4. When complete, download the report\nThere is a limit of 5000 CVs per result, so you can use the filtering on offices to fetch the result in appropriate size batches.\n\n<table>\n<tbody>\n<tr>\n<td>Report Type</td>\n<td>Description</td>\n</tr>\n<tr>\n<td>user_report</td>\n<td>Information about users</td>\n</tr>\n<tr>\n<td>usage_report </td>\n<td>Information about when a CV was last updated</td>\n</tr>\n  <tr>\n<td>project_experiences</td>\n<td>CV data - project experiences</td>\n</tr>\n  <tr>\n<td>certifications</td>\n<td>CV data - certifications</td>\n</tr>\n  <tr>\n<td>courses</td>\n<td>CV data - courses</td>\n</tr>\n  <tr>\n<td>languages</td>\n<td>CV data - languages</td>\n</tr>\n  <tr>\n<td>technologies</td>\n<td>CV data - skills and skill categories</td>\n</tr>\n  <tr>\n<td>key_qualifications</td>\n<td>CV data - summaries</td>\n</tr>\n  <tr>\n<td>educations</td>\n<td>CV data - educations</td>\n</tr>\n    <tr>\n<td>work_experiences</td>\n<td>CV data - work experiences</td>\n</tr>\n    <tr>\n<td>positions</td>\n<td>CV data - positions</td>\n</tr>\n</tbody>\n</table>\n",
+                "operationId": "initiate-report-request",
+                "parameters": [
+                    {
+                        "name": "output_format",
+                        "in": "query",
+                        "description": "Choose output format for either XLSX or CSV",
+                        "required": true,
+                        "schema": {
+                            "enum": [
+                                "xlsx",
+                                "csv"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "report_type",
+                        "in": "query",
+                        "description": "Select report from list",
+                        "required": true,
+                        "schema": {
+                            "enum": [
+                                "user_report",
+                                "usage_report",
+                                "project_experiences",
+                                "certifications",
+                                "courses",
+                                "languages",
+                                "technologies",
+                                "key_qualifications",
+                                "educations",
+                                "work_experiences",
+                                "positions"
+                            ],
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Payload",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "office_ids": [
+                                    "OFFICE_ID_1",
+                                    "OFFICE_ID_2"
+                                ],
+                                "must": []
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "null"
+                    }
+                }
+            }
+        },
+        "/cv-report/{reportId}": {
+            "get": {
+                "summary": "Retrieve Report Request",
+                "description": "Provide ReportId returned by \"Initiate Report Request\" endpoint",
+                "operationId": "retrieve-report-request",
+                "parameters": [
+                    {
+                        "name": "reportId",
+                        "in": "path",
+                        "description": "Report Id from returned by \"Initiate Report Request\" endpoint",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "null"
+                    }
+                }
+            }
+        },
+        "/masterdata/{section}/{field}/{id}": {
+            "get": {
+                "summary": "Get Individual Masterdata",
+                "description": "Masterdata can be retrieved from the following API endpoint.",
+                "operationId": "reading-individual-masterdata",
+                "parameters": [
+                    {
+                        "name": "section",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "field",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "include_categories",
+                        "in": "query",
+                        "description": "The include_categories parameter determines whether the masterdata's categories will be\nincluded in the result. Note: only skills (technologies/tags) can have categories.",
+                        "schema": {
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "type": "bool"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "example": "An example response is shown below.\r\n{\r\n\"_id\": \"5a9019390e3b410f4fa10000\",\r\n\"id\": \"5a9019390e3b410f4fa10000\",\r\n\"section_type\": \"[SECTION]\",\r\n\"field_name\": \"[FIELD]\",\r\n\"values\": { \"int\": \"Name\" },\r\n\"external_unique_id\": null,\r\n\"help_text\": {},\r\n\"category_ids\": [\"5f3155e46c292a116ba80000\"],\r\n\"child_count\": 0,\r\n// only included if `include_categories` parameter is 'true'\r\n\"categories\": [\r\n{\r\n\"_id\": \"6a9019390e3b410f4fa10000\",\r\n\"id\": \"6a9019390e3b410f4fa10000\",\r\n\"section_type\": \"[SECTION]\",\r\n\"field_name\": \"[FIELD]\",\r\n\"values\": { \"int\": \"Category Name\" },\r\n\"external_unique_id\": null,\r\n\"help_text\": {},\r\n\"category_ids\": [],\r\n\"child_count\": 1,\r\n}\r\n]\r\n}"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/masterdata/{section}/{field}": {
+            "get": {
+                "summary": "Listing Masterdata",
+                "description": "Listing Masterdata",
+                "operationId": "listing-masterdata",
+                "parameters": [
+                    {
+                        "name": "section",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": ""
+                        }
+                    },
+                    {
+                        "name": "field",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": ""
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Change the offset and limit parameters to paginate the results.\ne.g. To get the first page of 20 results:\nGET https://servicehub.atea.com/cv-partner/masterdata/{section}/{field}?offset=0&limit=20\nand to get the next page set the offset to the number of the result to start from:https://servicehub.atea.com/cv-partner/masterdata/{section}/{field}?offset=20&limit=20",
+                        "schema": {
+                            "type": "int"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Change the offset and limit parameters to paginate the results.\ne.g. To get the first page of 20 results:\nGET https://servicehub.atea.com/cv-partner/masterdata/{section}/{field}?offset=0&limit=20\nand to get the next page set the offset to the number of the result to start from:https://servicehub.atea.com/cv-partner/masterdata/{section}/{field}?offset=20&limit=20",
+                        "schema": {
+                            "type": "int"
+                        }
+                    },
+                    {
+                        "name": "include_categories",
+                        "in": "query",
+                        "description": "The include_categories parameter determines whether the masterdata's categories will be included in the result.",
+                        "schema": {
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "type": "bool"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "example": "[\r\n{\r\n\"_id\": \"5a9019390e3b410f4fa10000\",\r\n\"id\": \"5a9019390e3b410f4fa10000\",\r\n\"section_type\": \"[SECTION]\",\r\n\"field_name\": \"[FIELD]\",\r\n\"values\": { \"int\": \"Name\" },\r\n\"external_unique_id\": null,\r\n\"help_text\": {},\r\n\"category_ids\": [\"5f3155e46c292a116ba80000\"],\r\n\"child_count\": 0,\r\n// only included if `include_categories` parameter is 'true'\r\n\"categories\": [\r\n// the masterdata categories if any\r\n]\r\n},\r\n// ... more masterdata results\r\n]"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Users": {
+                "type": "array",
+                "items": {
+                    "required": [
+                        "user_id",
+                        "_id",
+                        "id",
+                        "company_id",
+                        "company_name",
+                        "company_subdomains",
+                        "company_group_ids",
+                        "email",
+                        "external_unique_id",
+                        "upn",
+                        "deactivated",
+                        "deactivated_at",
+                        "created_at",
+                        "updated_at",
+                        "role",
+                        "roles",
+                        "role_allowed_office_ids",
+                        "role_allowed_tag_ids",
+                        "office_id",
+                        "office_name",
+                        "country_id",
+                        "country_code",
+                        "language_code",
+                        "language_codes",
+                        "international_toggle",
+                        "preferred_download_format",
+                        "masterdata_languages",
+                        "expand_proposals_toggle",
+                        "selected_office_ids",
+                        "include_officeless_reference_projects",
+                        "selected_tag_ids",
+                        "override_language_code",
+                        "default_cv_template_id",
+                        "image",
+                        "name",
+                        "telephone",
+                        "default_cv_id"
+                    ],
+                    "type": "object",
+                    "properties": {
+                        "user_id": {
+                            "type": "string"
+                        },
+                        "_id": {
+                            "type": "string"
+                        },
+                        "id": {
+                            "type": "string"
+                        },
+                        "company_id": {
+                            "type": "string"
+                        },
+                        "company_name": {
+                            "type": "string"
+                        },
+                        "company_subdomains": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "company_group_ids": {
+                            "type": "array"
+                        },
+                        "email": {
+                            "type": "string"
+                        },
+                        "external_unique_id": {
+                            "type": "string"
+                        },
+                        "upn": {},
+                        "deactivated": {
+                            "type": "boolean"
+                        },
+                        "deactivated_at": {
+                            "type": "boolean"
+                        },
+                        "created_at": {
+                            "type": "string"
+                        },
+                        "updated_at": {
+                            "type": "string"
+                        },
+                        "role": {
+                            "type": "string"
+                        },
+                        "roles": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "role_allowed_office_ids": {
+                            "type": "array"
+                        },
+                        "role_allowed_tag_ids": {
+                            "type": "array"
+                        },
+                        "office_id": {
+                            "type": "string"
+                        },
+                        "office_name": {
+                            "type": "string"
+                        },
+                        "country_id": {
+                            "type": "string"
+                        },
+                        "country_code": {
+                            "type": "string"
+                        },
+                        "language_code": {
+                            "type": "string"
+                        },
+                        "language_codes": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "international_toggle": {
+                            "type": "string"
+                        },
+                        "preferred_download_format": {
+                            "type": "string"
+                        },
+                        "masterdata_languages": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "expand_proposals_toggle": {
+                            "type": "boolean"
+                        },
+                        "selected_office_ids": {
+                            "type": "array"
+                        },
+                        "include_officeless_reference_projects": {
+                            "type": "boolean"
+                        },
+                        "selected_tag_ids": {
+                            "type": "array"
+                        },
+                        "override_language_code": {},
+                        "default_cv_template_id": {
+                            "type": "string"
+                        },
+                        "image": {
+                            "type": "object",
+                            "properties": {
+                                "url": {},
+                                "thumb": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {}
+                                    }
+                                },
+                                "fit_thumb": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {}
+                                    }
+                                },
+                                "large": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {}
+                                    }
+                                },
+                                "small_thumb": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {}
+                                    }
+                                }
+                            }
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "telephone": {
+                            "type": "string"
+                        },
+                        "default_cv_id": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "Countries": {
+                "type": "array",
+                "items": {
+                    "required": [
+                        "_id",
+                        "code",
+                        "selected",
+                        "native_language_code",
+                        "word_template_id",
+                        "default_ppt_template_id",
+                        "default_word_template_id",
+                        "cv_template_id",
+                        "cv_template_type",
+                        "offices",
+                        "setting"
+                    ],
+                    "type": "object",
+                    "properties": {
+                        "_id": {
+                            "type": "string"
+                        },
+                        "code": {
+                            "type": "string"
+                        },
+                        "selected": {
+                            "type": "boolean"
+                        },
+                        "native_language_code": {
+                            "type": "string"
+                        },
+                        "word_template_id": {},
+                        "default_ppt_template_id": {},
+                        "default_word_template_id": {},
+                        "cv_template_id": {
+                            "type": "string"
+                        },
+                        "cv_template_type": {
+                            "type": "string"
+                        },
+                        "offices": {
+                            "type": "array",
+                            "items": {
+                                "required": [
+                                    "_id",
+                                    "name",
+                                    "selected",
+                                    "default_word_template_id",
+                                    "default_ppt_template_id",
+                                    "cv_template_id",
+                                    "cv_template_type",
+                                    "country_id",
+                                    "country_code",
+                                    "override_language_code",
+                                    "num_users"
+                                ],
+                                "type": "object",
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "selected": {
+                                        "type": "boolean"
+                                    },
+                                    "default_word_template_id": {},
+                                    "default_ppt_template_id": {},
+                                    "cv_template_id": {
+                                        "type": "string"
+                                    },
+                                    "cv_template_type": {
+                                        "type": "string"
+                                    },
+                                    "country_id": {
+                                        "type": "string"
+                                    },
+                                    "country_code": {
+                                        "type": "string"
+                                    },
+                                    "override_language_code": {},
+                                    "num_users": {
+                                        "type": "integer"
+                                    }
+                                }
+                            }
+                        },
+                        "setting": {
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "CV": {
+                "type": "object",
+                "properties": {
+                    "_id": {
+                        "type": "string"
+                    },
+                    "born_day": {
+                        "type": "integer"
+                    },
+                    "born_month": {
+                        "type": "integer"
+                    },
+                    "born_year": {
+                        "type": "integer"
+                    },
+                    "bruker_id": {
+                        "type": "string"
+                    },
+                    "certifications": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "_id",
+                                "created_at",
+                                "disabled",
+                                "diverged_from_master",
+                                "external_unique_id",
+                                "long_description",
+                                "modifier_id",
+                                "month",
+                                "month_expire",
+                                "name",
+                                "order",
+                                "organiser",
+                                "origin_id",
+                                "owner_updated_at",
+                                "recently_added",
+                                "starred",
+                                "updated_at",
+                                "version",
+                                "year",
+                                "year_expire",
+                                "attachments"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "type": "string"
+                                },
+                                "disabled": {
+                                    "type": "boolean"
+                                },
+                                "diverged_from_master": {
+                                    "type": "boolean"
+                                },
+                                "external_unique_id": {},
+                                "long_description": {
+                                    "type": "object"
+                                },
+                                "modifier_id": {},
+                                "month": {
+                                    "type": "string"
+                                },
+                                "month_expire": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "order": {
+                                    "type": "integer"
+                                },
+                                "organiser": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        },
+                                        "int": {
+                                            "type": "string"
+                                        },
+                                        "no": {
+                                            "type": "string"
+                                        },
+                                        "se": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "origin_id": {},
+                                "owner_updated_at": {},
+                                "recently_added": {
+                                    "type": "boolean"
+                                },
+                                "starred": {
+                                    "type": "boolean"
+                                },
+                                "updated_at": {
+                                    "type": "string"
+                                },
+                                "version": {
+                                    "type": "integer"
+                                },
+                                "year": {
+                                    "type": "string"
+                                },
+                                "year_expire": {
+                                    "type": "string"
+                                },
+                                "attachments": {
+                                    "type": "array"
+                                }
+                            }
+                        }
+                    },
+                    "courses": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "_id",
+                                "created_at",
+                                "disabled",
+                                "diverged_from_master",
+                                "external_unique_id",
+                                "long_description",
+                                "modifier_id",
+                                "month",
+                                "name",
+                                "order",
+                                "origin_id",
+                                "owner_updated_at",
+                                "program",
+                                "recently_added",
+                                "starred",
+                                "updated_at",
+                                "version",
+                                "year",
+                                "attachments"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "type": "string"
+                                },
+                                "disabled": {
+                                    "type": "boolean"
+                                },
+                                "diverged_from_master": {
+                                    "type": "boolean"
+                                },
+                                "external_unique_id": {},
+                                "long_description": {
+                                    "type": "object"
+                                },
+                                "modifier_id": {},
+                                "month": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "order": {
+                                    "type": "integer"
+                                },
+                                "origin_id": {},
+                                "owner_updated_at": {},
+                                "program": {
+                                    "type": "object"
+                                },
+                                "recently_added": {
+                                    "type": "boolean"
+                                },
+                                "starred": {
+                                    "type": "boolean"
+                                },
+                                "updated_at": {
+                                    "type": "string"
+                                },
+                                "version": {
+                                    "type": "integer"
+                                },
+                                "year": {
+                                    "type": "string"
+                                },
+                                "attachments": {
+                                    "type": "array"
+                                }
+                            }
+                        }
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "custom_tag_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "default": {
+                        "type": "boolean"
+                    },
+                    "educations": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "_id",
+                                "created_at",
+                                "degree",
+                                "description",
+                                "disabled",
+                                "diverged_from_master",
+                                "external_unique_id",
+                                "modifier_id",
+                                "month_from",
+                                "month_to",
+                                "order",
+                                "origin_id",
+                                "owner_updated_at",
+                                "recently_added",
+                                "school",
+                                "starred",
+                                "updated_at",
+                                "version",
+                                "year_from",
+                                "year_to",
+                                "attachments"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "type": "string"
+                                },
+                                "degree": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": {
+                                    "type": "object"
+                                },
+                                "disabled": {
+                                    "type": "boolean"
+                                },
+                                "diverged_from_master": {
+                                    "type": "boolean"
+                                },
+                                "external_unique_id": {},
+                                "modifier_id": {},
+                                "month_from": {
+                                    "type": "string"
+                                },
+                                "month_to": {
+                                    "type": "string"
+                                },
+                                "order": {
+                                    "type": "integer"
+                                },
+                                "origin_id": {},
+                                "owner_updated_at": {},
+                                "recently_added": {
+                                    "type": "boolean"
+                                },
+                                "school": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "starred": {
+                                    "type": "boolean"
+                                },
+                                "updated_at": {
+                                    "type": "string"
+                                },
+                                "version": {
+                                    "type": "integer"
+                                },
+                                "year_from": {
+                                    "type": "string"
+                                },
+                                "year_to": {
+                                    "type": "string"
+                                },
+                                "attachments": {
+                                    "type": "array"
+                                }
+                            }
+                        }
+                    },
+                    "highlighted_roles": {
+                        "type": "array"
+                    },
+                    "imported_date": {},
+                    "key_qualifications": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "_id",
+                                "created_at",
+                                "disabled",
+                                "diverged_from_master",
+                                "external_unique_id",
+                                "label",
+                                "long_description",
+                                "modifier_id",
+                                "order",
+                                "origin_id",
+                                "owner_updated_at",
+                                "recently_added",
+                                "starred",
+                                "tag_line",
+                                "updated_at",
+                                "version"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "type": "string"
+                                },
+                                "disabled": {
+                                    "type": "boolean"
+                                },
+                                "diverged_from_master": {
+                                    "type": "boolean"
+                                },
+                                "external_unique_id": {},
+                                "label": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "long_description": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "modifier_id": {},
+                                "order": {
+                                    "type": "integer"
+                                },
+                                "origin_id": {},
+                                "owner_updated_at": {},
+                                "recently_added": {
+                                    "type": "boolean"
+                                },
+                                "starred": {
+                                    "type": "boolean"
+                                },
+                                "tag_line": {
+                                    "type": "object"
+                                },
+                                "updated_at": {
+                                    "type": "string"
+                                },
+                                "version": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "landline": {},
+                    "languages": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "_id",
+                                "created_at",
+                                "disabled",
+                                "diverged_from_master",
+                                "external_unique_id",
+                                "level",
+                                "modifier_id",
+                                "name",
+                                "order",
+                                "origin_id",
+                                "owner_updated_at",
+                                "recently_added",
+                                "starred",
+                                "updated_at",
+                                "version"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "type": "string"
+                                },
+                                "disabled": {
+                                    "type": "boolean"
+                                },
+                                "diverged_from_master": {
+                                    "type": "boolean"
+                                },
+                                "external_unique_id": {},
+                                "level": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "modifier_id": {},
+                                "name": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "order": {
+                                    "type": "integer"
+                                },
+                                "origin_id": {},
+                                "owner_updated_at": {},
+                                "recently_added": {
+                                    "type": "boolean"
+                                },
+                                "starred": {
+                                    "type": "boolean"
+                                },
+                                "updated_at": {
+                                    "type": "string"
+                                },
+                                "version": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "level": {},
+                    "modifier_id": {},
+                    "name_multilang": {
+                        "type": "object"
+                    },
+                    "nationality": {
+                        "type": "object",
+                        "properties": {
+                            "int": {},
+                            "dk": {},
+                            "no": {},
+                            "se": {}
+                        }
+                    },
+                    "navn": {
+                        "type": "string"
+                    },
+                    "order": {},
+                    "owner_updated_at": {},
+                    "owner_updated_at_significant": {},
+                    "place_of_residence": {
+                        "type": "object",
+                        "properties": {
+                            "dk": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "project_experiences": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "_id",
+                                "area_amt",
+                                "area_unit",
+                                "created_at",
+                                "customer",
+                                "customer_anonymized",
+                                "customer_description",
+                                "customer_selected",
+                                "customer_value_proposition",
+                                "description",
+                                "disabled",
+                                "diverged_from_master",
+                                "exclude_tags",
+                                "expected_roll_off_date",
+                                "extent_hours",
+                                "external_unique_id",
+                                "industry",
+                                "long_description",
+                                "modifier_id",
+                                "month_from",
+                                "month_to",
+                                "order",
+                                "origin_id",
+                                "owner_updated_at",
+                                "percent_allocated",
+                                "project_experience_skills",
+                                "project_extent_amt",
+                                "project_extent_currency",
+                                "project_extent_hours",
+                                "project_type",
+                                "recently_added",
+                                "related_work_experience_id",
+                                "roles",
+                                "starred",
+                                "total_extent_amt",
+                                "total_extent_currency",
+                                "total_extent_hours",
+                                "updated_at",
+                                "version",
+                                "year_from",
+                                "year_to",
+                                "images"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                },
+                                "area_amt": {},
+                                "area_unit": {},
+                                "created_at": {
+                                    "type": "string"
+                                },
+                                "customer": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        },
+                                        "int": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "customer_anonymized": {
+                                    "type": "object"
+                                },
+                                "customer_description": {
+                                    "type": "object",
+                                    "properties": {
+                                        "int": {
+                                            "type": "string"
+                                        },
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "customer_selected": {
+                                    "type": "string"
+                                },
+                                "customer_value_proposition": {
+                                    "type": "object",
+                                    "properties": {
+                                        "int": {
+                                            "type": "string"
+                                        },
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "description": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        },
+                                        "int": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "disabled": {
+                                    "type": "boolean"
+                                },
+                                "diverged_from_master": {
+                                    "type": "boolean"
+                                },
+                                "exclude_tags": {
+                                    "type": "array"
+                                },
+                                "expected_roll_off_date": {},
+                                "extent_hours": {},
+                                "external_unique_id": {
+                                    "type": "string"
+                                },
+                                "industry": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "long_description": {
+                                    "type": "object",
+                                    "properties": {
+                                        "int": {
+                                            "type": "string"
+                                        },
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "modifier_id": {},
+                                "month_from": {
+                                    "type": "string"
+                                },
+                                "month_to": {
+                                    "type": "string"
+                                },
+                                "order": {
+                                    "type": "integer"
+                                },
+                                "origin_id": {},
+                                "owner_updated_at": {},
+                                "percent_allocated": {},
+                                "project_experience_skills": {
+                                    "type": "array",
+                                    "items": {
+                                        "required": [
+                                            "_id",
+                                            "base_duration_in_years",
+                                            "modifier_id",
+                                            "offset_duration_in_years",
+                                            "order",
+                                            "proficiency",
+                                            "tags",
+                                            "total_duration_in_years",
+                                            "version"
+                                        ],
+                                        "type": "object",
+                                        "properties": {
+                                            "_id": {
+                                                "type": "string"
+                                            },
+                                            "base_duration_in_years": {
+                                                "type": "integer"
+                                            },
+                                            "modifier_id": {},
+                                            "offset_duration_in_years": {
+                                                "type": "integer"
+                                            },
+                                            "order": {
+                                                "type": "integer"
+                                            },
+                                            "proficiency": {
+                                                "type": "integer"
+                                            },
+                                            "tags": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "dk": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "total_duration_in_years": {
+                                                "type": "integer"
+                                            },
+                                            "version": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    }
+                                },
+                                "project_extent_amt": {},
+                                "project_extent_currency": {},
+                                "project_extent_hours": {},
+                                "project_type": {
+                                    "type": "object"
+                                },
+                                "recently_added": {
+                                    "type": "boolean"
+                                },
+                                "related_work_experience_id": {},
+                                "roles": {
+                                    "type": "array",
+                                    "items": {
+                                        "required": [
+                                            "_id",
+                                            "created_at",
+                                            "cv_role_id",
+                                            "disabled",
+                                            "diverged_from_master",
+                                            "long_description",
+                                            "modifier_id",
+                                            "name",
+                                            "order",
+                                            "origin_id",
+                                            "recently_added",
+                                            "starred",
+                                            "summary",
+                                            "updated_at",
+                                            "version"
+                                        ],
+                                        "type": "object",
+                                        "properties": {
+                                            "_id": {
+                                                "type": "string"
+                                            },
+                                            "created_at": {
+                                                "type": "string"
+                                            },
+                                            "cv_role_id": {},
+                                            "disabled": {
+                                                "type": "boolean"
+                                            },
+                                            "diverged_from_master": {
+                                                "type": "boolean"
+                                            },
+                                            "long_description": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "dk": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "modifier_id": {},
+                                            "name": {},
+                                            "order": {},
+                                            "origin_id": {},
+                                            "recently_added": {
+                                                "type": "boolean"
+                                            },
+                                            "starred": {
+                                                "type": "boolean"
+                                            },
+                                            "summary": {
+                                                "type": "object"
+                                            },
+                                            "updated_at": {
+                                                "type": "string"
+                                            },
+                                            "version": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    }
+                                },
+                                "starred": {
+                                    "type": "boolean"
+                                },
+                                "total_extent_amt": {},
+                                "total_extent_currency": {},
+                                "total_extent_hours": {},
+                                "updated_at": {
+                                    "type": "string"
+                                },
+                                "version": {
+                                    "type": "integer"
+                                },
+                                "year_from": {
+                                    "type": "string"
+                                },
+                                "year_to": {
+                                    "type": "string"
+                                },
+                                "images": {
+                                    "type": "array"
+                                }
+                            }
+                        }
+                    },
+                    "technologies": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "_id",
+                                "category",
+                                "created_at",
+                                "disabled",
+                                "diverged_from_master",
+                                "exclude_tags",
+                                "external_unique_id",
+                                "modifier_id",
+                                "order",
+                                "origin_id",
+                                "owner_updated_at",
+                                "recently_added",
+                                "starred",
+                                "technology_skills",
+                                "uncategorized",
+                                "updated_at",
+                                "version"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                },
+                                "category": {
+                                    "type": "object"
+                                },
+                                "created_at": {
+                                    "type": "string"
+                                },
+                                "disabled": {
+                                    "type": "boolean"
+                                },
+                                "diverged_from_master": {
+                                    "type": "boolean"
+                                },
+                                "exclude_tags": {
+                                    "type": "array"
+                                },
+                                "external_unique_id": {},
+                                "modifier_id": {},
+                                "order": {},
+                                "origin_id": {},
+                                "owner_updated_at": {},
+                                "recently_added": {
+                                    "type": "boolean"
+                                },
+                                "starred": {
+                                    "type": "boolean"
+                                },
+                                "technology_skills": {
+                                    "type": "array",
+                                    "items": {
+                                        "required": [
+                                            "_id",
+                                            "base_duration_in_years",
+                                            "modifier_id",
+                                            "offset_duration_in_years",
+                                            "order",
+                                            "proficiency",
+                                            "tags",
+                                            "total_duration_in_years",
+                                            "version"
+                                        ],
+                                        "type": "object",
+                                        "properties": {
+                                            "_id": {
+                                                "type": "string"
+                                            },
+                                            "base_duration_in_years": {
+                                                "type": "integer"
+                                            },
+                                            "modifier_id": {},
+                                            "offset_duration_in_years": {
+                                                "type": "integer"
+                                            },
+                                            "order": {
+                                                "type": "integer"
+                                            },
+                                            "proficiency": {
+                                                "type": "integer"
+                                            },
+                                            "tags": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "dk": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "total_duration_in_years": {
+                                                "type": "integer"
+                                            },
+                                            "version": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    }
+                                },
+                                "uncategorized": {
+                                    "type": "boolean"
+                                },
+                                "updated_at": {
+                                    "type": "string"
+                                },
+                                "version": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "telefon": {
+                        "type": "string"
+                    },
+                    "tilbud_id": {},
+                    "title": {
+                        "type": "object",
+                        "properties": {
+                            "dk": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "twitter": {},
+                    "updated_at": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "work_experiences": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "_id",
+                                "created_at",
+                                "description",
+                                "disabled",
+                                "diverged_from_master",
+                                "employer",
+                                "external_unique_id",
+                                "long_description",
+                                "modifier_id",
+                                "month_from",
+                                "month_to",
+                                "order",
+                                "origin_id",
+                                "owner_updated_at",
+                                "recently_added",
+                                "starred",
+                                "updated_at",
+                                "version",
+                                "year_from",
+                                "year_to"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "disabled": {
+                                    "type": "boolean"
+                                },
+                                "diverged_from_master": {
+                                    "type": "boolean"
+                                },
+                                "employer": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "external_unique_id": {},
+                                "long_description": {
+                                    "type": "object"
+                                },
+                                "modifier_id": {},
+                                "month_from": {
+                                    "type": "string"
+                                },
+                                "month_to": {},
+                                "order": {
+                                    "type": "integer"
+                                },
+                                "origin_id": {},
+                                "owner_updated_at": {},
+                                "recently_added": {
+                                    "type": "boolean"
+                                },
+                                "starred": {
+                                    "type": "boolean"
+                                },
+                                "updated_at": {
+                                    "type": "string"
+                                },
+                                "version": {
+                                    "type": "integer"
+                                },
+                                "year_from": {
+                                    "type": "string"
+                                },
+                                "year_to": {}
+                            }
+                        }
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "company_id": {
+                        "type": "string"
+                    },
+                    "external_unique_id": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "country_code": {
+                        "type": "string"
+                    },
+                    "language_code": {
+                        "type": "string"
+                    },
+                    "language_codes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "proposal": {},
+                    "custom_tags": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "_id",
+                                "id",
+                                "values",
+                                "external_unique_id",
+                                "custom_tag_category_id",
+                                "category_ids",
+                                "custom_tag_category"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                },
+                                "id": {
+                                    "type": "string"
+                                },
+                                "values": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dk": {
+                                            "type": "string"
+                                        },
+                                        "int": {
+                                            "type": "string"
+                                        },
+                                        "no": {
+                                            "type": "string"
+                                        },
+                                        "se": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "external_unique_id": {
+                                    "type": "string"
+                                },
+                                "custom_tag_category_id": {
+                                    "type": "string"
+                                },
+                                "category_ids": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                "custom_tag_category": {
+                                    "type": "object",
+                                    "properties": {
+                                        "_id": {
+                                            "type": "string"
+                                        },
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "values": {
+                                            "type": "object",
+                                            "properties": {
+                                                "dk": {
+                                                    "type": "string"
+                                                },
+                                                "int": {
+                                                    "type": "string"
+                                                },
+                                                "no": {
+                                                    "type": "string"
+                                                },
+                                                "se": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "external_unique_id": {
+                                            "type": "string"
+                                        },
+                                        "can_be_used_for_cvs": {
+                                            "type": "boolean"
+                                        },
+                                        "can_be_used_for_references": {
+                                            "type": "boolean"
+                                        },
+                                        "can_be_used_for_customers": {
+                                            "type": "boolean"
+                                        },
+                                        "allow_filtering": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "updated_ago": {
+                        "type": "string"
+                    },
+                    "template_document_type": {
+                        "type": "string"
+                    },
+                    "default_word_template_id": {
+                        "type": "string"
+                    },
+                    "default_ppt_template_id": {},
+                    "cv_roles": {
+                        "type": "array"
+                    },
+                    "image": {
+                        "type": "object",
+                        "properties": {
+                            "url": {
+                                "type": "string"
+                            },
+                            "thumb": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "fit_thumb": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "large": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "small_thumb": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "can_write": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "SearchUsers": {
+                "type": "object",
+                "properties": {
+                    "cvs": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "cv",
+                                "preview_url",
+                                "highlight",
+                                "index",
+                                "id"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "cv": {
+                                    "type": "object",
+                                    "properties": {
+                                        "image": {
+                                            "type": "object",
+                                            "properties": {
+                                                "url": {
+                                                    "type": "string"
+                                                },
+                                                "thumb": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "url": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "fit_thumb": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "url": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "large": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "url": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "small_thumb": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "url": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "titles": {
+                                            "type": "object",
+                                            "properties": {
+                                                "dk": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "telephone": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        },
+                                        "navn": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "name_multilang": {
+                                            "type": "object"
+                                        },
+                                        "bruker_id": {
+                                            "type": "string"
+                                        },
+                                        "user_id": {
+                                            "type": "string"
+                                        },
+                                        "company_id": {
+                                            "type": "string"
+                                        },
+                                        "_id": {
+                                            "type": "string"
+                                        },
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "updated_at": {
+                                            "type": "string"
+                                        },
+                                        "updated_ago": {
+                                            "type": "string"
+                                        },
+                                        "owner_updated_at": {},
+                                        "default_word_template_id": {
+                                            "type": "string"
+                                        },
+                                        "default_ppt_template_id": {},
+                                        "country_code": {
+                                            "type": "string"
+                                        },
+                                        "language_code": {
+                                            "type": "string"
+                                        },
+                                        "language_codes": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "template_document_type": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "preview_url": {
+                                    "type": "string"
+                                },
+                                "highlight": {
+                                    "type": "string"
+                                },
+                                "index": {
+                                    "type": "integer"
+                                },
+                                "id": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "facets": {
+                        "type": "object"
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Categories": {
+                "type": "array",
+                "items": {
+                    "required": [
+                        "_id",
+                        "id",
+                        "section_type",
+                        "field_name",
+                        "values",
+                        "external_unique_id",
+                        "help_text",
+                        "category_ids",
+                        "child_count"
+                    ],
+                    "type": "object",
+                    "properties": {
+                        "_id": {
+                            "type": "string"
+                        },
+                        "id": {
+                            "type": "string"
+                        },
+                        "section_type": {
+                            "type": "string"
+                        },
+                        "field_name": {
+                            "type": "string"
+                        },
+                        "values": {
+                            "type": "object",
+                            "properties": {
+                                "dk": {
+                                    "type": "string"
+                                },
+                                "int": {
+                                    "type": "string"
+                                },
+                                "no": {
+                                    "type": "string"
+                                },
+                                "se": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "external_unique_id": {},
+                        "help_text": {
+                            "type": "object"
+                        },
+                        "category_ids": {
+                            "type": "array"
+                        },
+                        "child_count": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            },
+            "Skills": {
+                "type": "array",
+                "items": {
+                    "required": [
+                        "_id",
+                        "id",
+                        "section_type",
+                        "field_name",
+                        "values",
+                        "external_unique_id",
+                        "help_text",
+                        "category_ids",
+                        "child_count"
+                    ],
+                    "type": "object",
+                    "properties": {
+                        "_id": {
+                            "type": "string"
+                        },
+                        "id": {
+                            "type": "string"
+                        },
+                        "section_type": {
+                            "type": "string"
+                        },
+                        "field_name": {
+                            "type": "string"
+                        },
+                        "values": {
+                            "type": "object",
+                            "properties": {
+                                "no": {
+                                    "type": "string"
+                                },
+                                "se": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "external_unique_id": {},
+                        "help_text": {
+                            "type": "object"
+                        },
+                        "category_ids": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "child_count": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            },
+            "unapprovedCategories": {
+                "type": "object",
+                "properties": {
+                    "wrapper": {
+                        "type": "object",
+                        "properties": {
+                            "terms": {
+                                "type": "array",
+                                "items": {
+                                    "required": [
+                                        "term",
+                                        "count"
+                                    ],
+                                    "type": "object",
+                                    "properties": {
+                                        "term": {
+                                            "type": "string"
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "unapprovedSkills": {
+                "type": "object",
+                "properties": {
+                    "wrapper": {
+                        "type": "object",
+                        "properties": {
+                            "terms": {
+                                "type": "array",
+                                "items": {
+                                    "required": [
+                                        "term",
+                                        "count",
+                                        "matching_categories"
+                                    ],
+                                    "type": "object",
+                                    "properties": {
+                                        "term": {
+                                            "type": "string"
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        },
+                                        "matching_categories": {
+                                            "type": "array",
+                                            "items": {
+                                                "required": [
+                                                    "term",
+                                                    "count"
+                                                ],
+                                                "type": "object",
+                                                "properties": {
+                                                    "term": {
+                                                        "type": "string"
+                                                    },
+                                                    "count": {
+                                                        "type": "integer"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "apiKeyHeader": {
+                "type": "apiKey",
+                "name": "Ocp-Apim-Subscription-Key",
+                "in": "header"
+            },
+            "apiKeyQuery": {
+                "type": "apiKey",
+                "name": "subscription-key",
+                "in": "query"
+            }
+        }
+    },
+    "security": [
+        {
+            "apiKeyHeader": []
+        },
+        {
+            "apiKeyQuery": []
+        }
+    ]
+}
