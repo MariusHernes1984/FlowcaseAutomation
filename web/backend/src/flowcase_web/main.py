@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    import asyncio
+
     settings = get_settings()
     handle = await storage.connect(settings)
     try:
@@ -34,6 +36,33 @@ async def lifespan(_app: FastAPI):
         await ensure_seed_agents(handle)
     except Exception:
         logger.exception("Startup bootstrap failed — app will keep running")
+
+    # Fire-and-forget: warm the MCP server's caches (countries, skill
+    # taxonomy, data_export) so the first real chat doesn't pay the
+    # 10–15 s cold-cache cost. If it fails, the next real call still
+    # works — just without the warm-up boost.
+    async def _warmup() -> None:
+        if not settings.mcp_url or not settings.mcp_api_key:
+            return
+        try:
+            from flowcase_web.mcp_client import FlowcaseMcpClient
+
+            client = FlowcaseMcpClient(settings.mcp_url, settings.mcp_api_key)
+            # Cheap calls that hydrate the heavy caches server-side.
+            await client.call_tool(
+                "flowcase_list_offices",
+                {"params": {"response_format": "json"}},
+            )
+            await client.call_tool(
+                "flowcase_list_skills",
+                {"params": {"limit": 1, "response_format": "json"}},
+            )
+            logger.info("MCP warm-up finished")
+        except Exception:
+            logger.exception("MCP warm-up failed — continuing anyway")
+
+    asyncio.create_task(_warmup())
+
     yield
     await storage.close()
 

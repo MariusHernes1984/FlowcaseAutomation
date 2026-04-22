@@ -419,7 +419,8 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
+        // Keep one replica warm so cold starts don't punish every morning.
+        minReplicas: 1
         maxReplicas: 3
       }
     }
@@ -596,7 +597,8 @@ resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
+        // Keep one replica warm so cold starts don't punish every morning.
+        minReplicas: 1
         maxReplicas: 3
       }
     }

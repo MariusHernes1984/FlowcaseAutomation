@@ -38,14 +38,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
-      <Card className="w-full max-w-md p-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Flowcase</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Logg inn med brukernavn og passord
-          </p>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-zinc-50 px-6">
+      {/* Soft brand backdrop */}
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 bg-gradient-to-br from-atea-50 via-white to-zinc-100"
+      />
+      <div
+        aria-hidden
+        className="absolute -top-40 left-1/2 -z-10 h-[480px] w-[480px] -translate-x-1/2 rounded-full bg-atea-600/15 blur-3xl"
+      />
+
+      <Card className="w-full max-w-md animate-fade-in p-8">
+        <div className="mb-6 flex items-center gap-3">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-atea-600 text-base font-bold text-white shadow-soft">
+            F
+          </span>
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Flowcase</h1>
+            <p className="text-xs text-zinc-500">Atea konsulent-søk</p>
+          </div>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="email">E-post</Label>
@@ -56,7 +70,8 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1"
+              className="mt-1.5"
+              placeholder="du@atea.no"
             />
           </div>
           <div>
@@ -68,11 +83,12 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1"
+              className="mt-1.5"
+              placeholder="••••••••"
             />
           </div>
           {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
               {error}
             </div>
           )}

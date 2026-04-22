@@ -1,7 +1,6 @@
 /**
- * Small inline UI primitives. Enough to render the app without pulling in
- * shadcn/ui wholesale. Swap for shadcn equivalents later if richer variants
- * are needed.
+ * Small inline UI primitives. Tailwind + zinc palette + Atea-red accent.
+ * Drop-in shadcn-style API so components can be swapped later.
  */
 
 import type {
@@ -16,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "danger";
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "icon";
 }
 
 export function Button({
@@ -26,17 +25,20 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-md font-medium transition disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2";
+    "inline-flex items-center justify-center gap-2 font-medium transition-all duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atea-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50";
   const variants = {
-    primary: "bg-slate-900 text-white hover:bg-slate-800",
+    primary:
+      "bg-atea-600 text-white shadow-soft hover:bg-atea-700 active:bg-atea-800",
     secondary:
-      "bg-white text-slate-900 border border-slate-300 hover:bg-slate-50",
-    ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
-    danger: "bg-red-600 text-white hover:bg-red-700",
+      "bg-white text-zinc-800 ring-1 ring-zinc-200 shadow-soft hover:bg-zinc-50",
+    ghost:
+      "bg-transparent text-zinc-700 hover:bg-zinc-100",
+    danger: "bg-red-600 text-white shadow-soft hover:bg-red-700",
   };
   const sizes = {
-    sm: "h-8 px-3 text-sm",
-    md: "h-10 px-4 text-sm",
+    sm: "h-8 rounded-md px-3 text-sm",
+    md: "h-10 rounded-lg px-4 text-sm",
+    icon: "h-10 w-10 rounded-lg p-0",
   };
   return (
     <button className={cn(base, variants[variant], sizes[size], className)} {...props} />
@@ -50,7 +52,7 @@ export function Input({
   return (
     <input
       className={cn(
-        "block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500",
+        "block w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 transition-colors focus:border-atea-500 focus:outline-none focus:ring-2 focus:ring-atea-500/20",
         className,
       )}
       {...props}
@@ -65,7 +67,7 @@ export function Textarea({
   return (
     <textarea
       className={cn(
-        "block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500",
+        "block w-full resize-none rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 transition-colors focus:border-atea-500 focus:outline-none focus:ring-2 focus:ring-atea-500/20",
         className,
       )}
       {...props}
@@ -79,7 +81,7 @@ export function Label({
 }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label
-      className={cn("block text-sm font-medium text-slate-700", className)}
+      className={cn("block text-sm font-medium text-zinc-700", className)}
       {...props}
     />
   );
@@ -95,7 +97,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-lg border border-slate-200 bg-white shadow-sm",
+        "rounded-xl border border-zinc-200/80 bg-white shadow-soft",
         className,
       )}
     >
@@ -111,19 +113,20 @@ export function Badge({
 }: {
   className?: string;
   children: ReactNode;
-  tone?: "neutral" | "blue" | "green" | "amber" | "red";
+  tone?: "neutral" | "blue" | "green" | "amber" | "red" | "atea";
 }) {
   const tones = {
-    neutral: "bg-slate-100 text-slate-700",
-    blue: "bg-blue-100 text-blue-800",
-    green: "bg-emerald-100 text-emerald-800",
-    amber: "bg-amber-100 text-amber-800",
-    red: "bg-red-100 text-red-800",
+    neutral: "bg-zinc-100 text-zinc-700 ring-zinc-200",
+    blue: "bg-blue-50 text-blue-800 ring-blue-200",
+    green: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+    amber: "bg-amber-50 text-amber-900 ring-amber-200",
+    red: "bg-rose-50 text-rose-800 ring-rose-200",
+    atea: "bg-atea-50 text-atea-700 ring-atea-200",
   };
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset",
         tones[tone],
         className,
       )}
