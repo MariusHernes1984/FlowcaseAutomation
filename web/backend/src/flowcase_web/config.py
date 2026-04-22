@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     cosmos_database: str = "flowcase"
     cosmos_container_users: str = "users"
     cosmos_container_agents: str = "agents"
+    cosmos_container_evaluations: str = "evaluations"
     cosmos_container_chats: str = "chats"
 
     # -- LLM (Azure OpenAI / Foundry) --------------------------------------

@@ -42,6 +42,9 @@ RUN pip install --upgrade pip && pip install .
 # Frontend dist
 COPY --from=frontend /build/dist /app/static
 
+# Eval gold dataset — runner.py looks for /app/gold.yaml first
+COPY tests/eval/gold.yaml /app/gold.yaml
+
 # Non-root user
 RUN useradd --create-home --shell /usr/sbin/nologin appuser \
     && chown -R appuser:appuser /app

@@ -263,6 +263,20 @@ resource cosmosChats 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/contain
   }
 }
 
+resource cosmosEvaluations 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = {
+  parent: cosmosDb
+  name: 'evaluations'
+  properties: {
+    resource: {
+      id: 'evaluations'
+      partitionKey: {
+        paths: ['/id']
+        kind: 'Hash'
+      }
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Container Apps Environment + storage link for file share
 // ---------------------------------------------------------------------------

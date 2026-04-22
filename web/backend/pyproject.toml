@@ -35,6 +35,9 @@ dependencies = [
 
     # MCP client over streamable HTTP
     "mcp>=1.2.0",
+
+    # Eval harness — gold YAML definitions
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]

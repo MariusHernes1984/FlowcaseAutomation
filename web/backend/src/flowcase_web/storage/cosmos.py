@@ -35,6 +35,7 @@ class CosmosHandle:
     users: ContainerProxy
     agents: ContainerProxy
     chats: ContainerProxy
+    evaluations: ContainerProxy
 
 
 _handle: CosmosHandle | None = None
@@ -61,6 +62,7 @@ async def connect(settings: Settings) -> CosmosHandle:
         users=db.get_container_client(settings.cosmos_container_users),
         agents=db.get_container_client(settings.cosmos_container_agents),
         chats=db.get_container_client(settings.cosmos_container_chats),
+        evaluations=db.get_container_client(settings.cosmos_container_evaluations),
     )
     _handle = handle
     logger.info("Cosmos connected to %s / %s", settings.cosmos_endpoint, settings.cosmos_database)

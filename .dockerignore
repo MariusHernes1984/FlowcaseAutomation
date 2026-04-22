@@ -31,6 +31,7 @@
 !**/.env.example
 data/
 tests/
+!tests/eval/gold.yaml
 docs/
 infra/
 
