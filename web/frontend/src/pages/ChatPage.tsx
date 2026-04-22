@@ -18,6 +18,11 @@ import {
 
 import { listAgents } from "@/api/agents";
 import { getChat, listChats, streamChat } from "@/api/chats";
+import FilterBar, {
+  EMPTY_FILTERS,
+  filtersToPrompt,
+  type ChatFilters,
+} from "@/components/FilterBar";
 import { renderToolResult } from "@/components/tool-results";
 import { Badge, Button, Card } from "@/components/ui";
 import type { Agent, ChatMessage, ChatSessionSummary } from "@/types";
@@ -47,6 +52,7 @@ export default function ChatPage() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [view, setView] = useState<ChatView | null>(null);
   const [input, setInput] = useState("");
+  const [filters, setFilters] = useState<ChatFilters>({ ...EMPTY_FILTERS });
   const abortRef = useRef<(() => void) | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -91,6 +97,7 @@ export default function ChatPage() {
     abortRef.current?.();
     abortRef.current = null;
     setView(null);
+    setFilters({ ...EMPTY_FILTERS });
   }, []);
 
   const send = useCallback(
@@ -186,8 +193,10 @@ export default function ChatPage() {
     const trimmed = input.trim();
     if (!trimmed || !selectedAgentId) return;
     if (view?.streaming) return;
+    const filterLine = filtersToPrompt(filters);
+    const content = filterLine ? `${filterLine}\n\n${trimmed}` : trimmed;
     setInput("");
-    send(selectedAgentId, trimmed);
+    send(selectedAgentId, content);
   };
 
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -258,7 +267,14 @@ export default function ChatPage() {
         </div>
 
         <div className="border-t border-zinc-200/70 bg-white/80 p-4 backdrop-blur-sm">
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-4xl space-y-2">
+            {selectedAgent && (
+              <FilterBar
+                filters={filters}
+                onChange={setFilters}
+                agentId={selectedAgent.id}
+              />
+            )}
             <div className="flex items-end gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-soft focus-within:border-atea-400 focus-within:ring-2 focus-within:ring-atea-500/20">
               <textarea
                 ref={textareaRef}

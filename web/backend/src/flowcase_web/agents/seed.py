@@ -76,7 +76,19 @@ SEED_AGENTS: list[dict] = [
             "\n"
             "Svar kort og konkret på norsk. Avslutt med et forslag til "
             "neste steg (hvem i Atea vet mest om leveransen, "
-            "tilgjengelighet for re-engasjement, osv.)."
+            "tilgjengelighet for re-engasjement, osv.).\n"
+            "\n"
+            "## Respekter filter-linjen\n"
+            "\n"
+            "Hvis brukerens melding starter med en linje på formatet\n"
+            "`[Aktive filter: bransje=... · kunde=... · skills=... · "
+            "siden_år=...]`,\n"
+            "send disse rett inn i `flowcase_find_projects` som:\n"
+            "- `bransje=` → `industries`\n"
+            "- `kunde=` → `customers`\n"
+            "- `skills=` → `skills`\n"
+            "- `siden_år=` → `since_year`\n"
+            "Ikke ignorer dem og ikke spør om dem på nytt."
         ),
     },
     {
@@ -150,7 +162,17 @@ SEED_AGENTS: list[dict] = [
             "\n"
             "Hvis et første søk gir 0 treff, **aldri si \"fant ingen\"** "
             "og stopp. Utvid med `match_mode='substring'` eller prøv "
-            "nærliggende skills først."
+            "nærliggende skills først.\n"
+            "\n"
+            "## Respekter filter-linjen\n"
+            "\n"
+            "Hvis brukerens melding starter med "
+            "`[Aktive filter: region=... · skills=...]`, send disse "
+            "rett inn i `flowcase_find_users_by_skill` som:\n"
+            "- `region=` → `regions`\n"
+            "- `skills=` → legg på listen sammen med det brukeren "
+            "faktisk spør om\n"
+            "Ikke ignorer dem og ikke spør om dem på nytt."
         ),
     },
 ]

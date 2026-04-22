@@ -21,6 +21,7 @@ from flowcase_web.auth import router as auth_router
 from flowcase_web.auth.bootstrap import ensure_admin
 from flowcase_web.chats import router as chats_router
 from flowcase_web.config import get_settings
+from flowcase_web.reference import router as reference_router
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,7 @@ def create_app() -> FastAPI:
     api.include_router(auth_router, prefix="/auth", tags=["auth"])
     api.include_router(agents_router, prefix="/agents", tags=["agents"])
     api.include_router(chats_router, prefix="/chats", tags=["chats"])
+    api.include_router(reference_router, prefix="/reference", tags=["reference"])
     app.include_router(api)
 
     # Serve the built React SPA when the dist directory is present.
