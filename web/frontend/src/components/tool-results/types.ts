@@ -148,6 +148,72 @@ export interface CvData {
   courses?: { name?: string; year?: string | null }[];
 }
 
+export interface CustomerItem {
+  customer_id: string;
+  name: string;
+}
+
+export interface IndustryItem {
+  industry_id: string;
+  name: string;
+}
+
+export interface ListCustomersData {
+  total?: number;
+  count?: number;
+  offset?: number;
+  limit?: number;
+  has_more?: boolean;
+  customers?: CustomerItem[];
+}
+
+export interface ListIndustriesData {
+  total?: number;
+  count?: number;
+  offset?: number;
+  limit?: number;
+  has_more?: boolean;
+  industries?: IndustryItem[];
+}
+
+export interface DeliveryConsultant {
+  name?: string | null;
+  user_id?: string | null;
+  cv_id?: string | null;
+  email?: string | null;
+  roles?: string[];
+}
+
+export interface Delivery {
+  customer?: string;
+  industry?: string;
+  description?: string;
+  from?: string;
+  to?: string;
+  roles?: string[];
+  skills_used?: string[];
+  consultants?: DeliveryConsultant[];
+}
+
+export interface FindProjectsData {
+  filters?: {
+    industries?: string[];
+    customers?: string[];
+    skills?: string[];
+    description_contains?: string | null;
+    since_year?: number | null;
+  };
+  unresolved?: {
+    industries?: string[];
+    customers?: string[];
+    skills?: string[];
+  };
+  total?: number;
+  returned?: number;
+  candidates_scanned?: number;
+  deliveries?: Delivery[];
+}
+
 export interface FindUserData {
   user_id?: string | null;
   default_cv_id?: string | null;

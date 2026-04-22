@@ -13,6 +13,9 @@ const AVAILABLE_TOOLS: { id: string; label: string }[] = [
   { id: "flowcase_list_skills", label: "flowcase_list_skills" },
   { id: "flowcase_find_users_by_skill", label: "flowcase_find_users_by_skill" },
   { id: "flowcase_get_availability", label: "flowcase_get_availability" },
+  { id: "flowcase_list_customers", label: "flowcase_list_customers" },
+  { id: "flowcase_list_industries", label: "flowcase_list_industries" },
+  { id: "flowcase_find_projects", label: "flowcase_find_projects" },
 ];
 
 export default function AgentEditor({

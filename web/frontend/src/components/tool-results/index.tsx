@@ -7,9 +7,12 @@
  */
 
 import AvailabilityResult from "./AvailabilityResult";
+import FindProjectsResult from "./FindProjectsResult";
 import FindUserResult from "./FindUserResult";
 import FindUsersResult from "./FindUsersResult";
 import GetCvResult from "./GetCvResult";
+import ListCustomersResult from "./ListCustomersResult";
+import ListIndustriesResult from "./ListIndustriesResult";
 import ListOfficesResult from "./ListOfficesResult";
 import ListRegionsResult from "./ListRegionsResult";
 import ListSkillsResult from "./ListSkillsResult";
@@ -17,8 +20,11 @@ import SearchUsersResult from "./SearchUsersResult";
 import type {
   AvailabilityResultData,
   CvData,
+  FindProjectsData,
   FindUserData,
   FindUsersBySkillData,
+  ListCustomersData,
+  ListIndustriesData,
   ListOfficesData,
   ListRegionsData,
   ListSkillsData,
@@ -55,6 +61,12 @@ export function renderToolResult(name: string, content: string) {
       return <SearchUsersResult data={parsed as SearchUsersData} />;
     case "flowcase_get_cv":
       return <GetCvResult data={parsed as CvData} />;
+    case "flowcase_list_customers":
+      return <ListCustomersResult data={parsed as ListCustomersData} />;
+    case "flowcase_list_industries":
+      return <ListIndustriesResult data={parsed as ListIndustriesData} />;
+    case "flowcase_find_projects":
+      return <FindProjectsResult data={parsed as FindProjectsData} />;
   }
 
   return (
