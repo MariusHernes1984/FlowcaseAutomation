@@ -190,10 +190,12 @@ function Popover({
     };
   }, [open, onClose]);
   if (!open) return null;
+  // FilterBar lives in the bottom composer; open upward so the list
+  // stays inside the viewport instead of clipping off the bottom.
   return (
     <div
       ref={ref}
-      className="absolute z-10 mt-1 w-72 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-floating"
+      className="absolute bottom-full left-0 z-50 mb-1 w-72 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-floating"
     >
       {children}
     </div>

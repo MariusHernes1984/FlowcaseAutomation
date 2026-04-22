@@ -1,0 +1,128 @@
+# Gold evaluation dataset for Flowcase agents.
+#
+# Each item describes a user question, which agent is expected to handle
+# it, and a mix of machine-verifiable and qualitative criteria. The
+# LLM-as-judge uses the qualitative list; machine checks are booleans
+# derived directly from the transcript (tool calls, args, final text).
+
+items:
+  # ---------- Konsulent-finner ----------
+
+  - id: k01
+    agent: konsulent-finner
+    question: "Finn 3 norske konsulenter som har Microsoft Azure"
+    must_call_tools_any: [flowcase_find_users_by_skill]
+    must_mention_any: ["Microsoft Azure"]
+    qualitative:
+      - "Lists at least 3 named consultants with email addresses"
+      - "Includes a capacity flag or billing-rate indicator per consultant"
+      - "Restricts scope to Norway (region=no or office_ids) — does not silently include SE/DK/FI"
+      - "Does not invent consultant names that are not in Flowcase"
+
+  - id: k02
+    agent: konsulent-finner
+    question: "Hvem dekker M365 Sikkerhet hos oss i Norge?"
+    must_call_tools_any: [flowcase_list_skills, flowcase_find_users_by_skill]
+    qualitative:
+      - "Breaks the vague topic 'M365 Sikkerhet' into concrete skills (Defender, Entra ID / Azure AD, Intune, Purview, Conditional Access, …)"
+      - "Uses flowcase_list_skills with multiple queries to discover those exact skill names before searching users"
+      - "Returns a set of consultants, not just a list of matching skills"
+      - "Avoids giving up with 'fant ingen' on the first attempt"
+
+  - id: k03
+    agent: konsulent-finner
+    question: "Hvem er mest ledig av våre Python-utviklere i Norge?"
+    must_call_tools_any: [flowcase_find_users_by_skill]
+    must_mention_any: ["Python"]
+    qualitative:
+      - "Sorts the returned consultants with most-available first"
+      - "Shows billing-rate or available-% per person"
+      - "Flags capacity visually (e.g. ✅ / 🟡 / 🔴) or with equivalent language"
+      - "Does not hide heavily-booked people — surfaces them with the right flag"
+
+  - id: k04
+    agent: konsulent-finner
+    question: "Hva har Aaron Jimenez erfaring med?"
+    must_call_tools_any: [flowcase_find_user, flowcase_get_cv]
+    must_mention_any: ["Aaron Jimenez"]
+    qualitative:
+      - "Actually fetches the real CV via flowcase_get_cv rather than making things up"
+      - "Summarises a handful of key skills and projects rather than dumping raw data"
+      - "Mentions current availability if relevant"
+
+  - id: k05
+    agent: konsulent-finner
+    question: "Finn konsulenter med både Microsoft Azure og Terraform i region Sør"
+    must_call_tools_any: [flowcase_find_users_by_skill]
+    must_include_args:
+      match_all: true
+    qualitative:
+      - "Uses match_all=true so both skills are required (AND)"
+      - "Scopes to region=sør"
+      - "Explains why each returned consultant qualifies (has both skills)"
+      - "If zero matches, suggests relaxing region or loosening match_all — does not fabricate"
+
+  - id: k06
+    agent: konsulent-finner
+    question: "Finn SAP-konsulenter i Sandefjord"
+    qualitative:
+      - "If no real matches, acknowledges the empty result honestly"
+      - "Offers an alternative (broader skill, broader region, substring-match) rather than inventing names"
+      - "Does not hallucinate consultants or claim fake SAP skills exist"
+
+  # ---------- Referanse-finner ----------
+
+  - id: r01
+    agent: referanse-finner
+    question: "Finn referanser i finans- eller banksektoren"
+    must_call_tools_any: [flowcase_list_industries, flowcase_find_projects]
+    qualitative:
+      - "Looks up the exact industry name via flowcase_list_industries before filtering"
+      - "Returns concrete customer names and project timelines"
+      - "Names the consultants who worked on each delivery"
+      - "Shows each project as an aggregated delivery — not duplicated entries per consultant"
+
+  - id: r02
+    agent: referanse-finner
+    question: "Hva har vi gjort for DNB?"
+    must_call_tools_any: [flowcase_list_customers, flowcase_find_projects]
+    qualitative:
+      - "Scopes the search to customer 'DNB' via the customer filter"
+      - "If Flowcase has DNB engagements, lists them truthfully with dates + participants"
+      - "If none are found, says so without fabricating"
+
+  - id: r03
+    agent: referanse-finner
+    question: "Finn M365-migrasjonsprosjekter i offentlig sektor"
+    must_call_tools_any: [flowcase_find_projects]
+    qualitative:
+      - "Combines industry (offentlig / public sector) and M365-specific skills or description keyword"
+      - "Presents aggregated deliveries with customers and timelines"
+      - "Avoids returning generic non-M365 projects just because the consultant lists Microsoft"
+
+  - id: r04
+    agent: referanse-finner
+    question: "Vis Azure-prosjekter siden 2024"
+    must_call_tools_any: [flowcase_find_projects]
+    must_include_args:
+      since_year: 2024
+    qualitative:
+      - "Sets since_year to 2024 in the find_projects call"
+      - "Projects shown are actually 2024 or later — not pre-2024"
+
+  - id: r05
+    agent: referanse-finner
+    question: "Har vi noen referanser hos Acme Corp?"
+    qualitative:
+      - "Recognises that Acme Corp is almost certainly not a real Atea customer"
+      - "Confirms by trying flowcase_list_customers and/or find_projects and reporting the absence"
+      - "Does not fabricate deliveries for Acme Corp"
+
+  - id: r06
+    agent: referanse-finner
+    question: "Hvilke sky-modernisering-prosjekter har vi?"
+    must_call_tools_any: [flowcase_find_projects]
+    qualitative:
+      - "Translates 'sky-modernisering' into concrete technical terms (Azure migration, Landing Zone, cloud adoption, IaaS → PaaS, …)"
+      - "Uses description_contains and/or skill-based filters to find matching projects"
+      - "Returns multiple deliveries when the data supports it"

@@ -5,20 +5,45 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Atea brand red used as the accent colour for primary CTAs
-        // and highlight states. Everything else is zinc so the accent
-        // actually stands out.
+        // Atea primary green (#008A00) — brand-approved accent for CTAs,
+        // active states, and highlights. Shades generated around the
+        // 600-step so "atea-600" matches the spec value exactly.
         atea: {
-          50: "#fff2f3",
-          100: "#ffe1e3",
-          200: "#ffc7cb",
-          300: "#ff9ea6",
-          400: "#ff666f",
-          500: "#ff2f3a",
-          600: "#e30613", // primary
-          700: "#c20410",
-          800: "#9d0610",
-          900: "#810a11",
+          50: "#e8f5e8",
+          100: "#c7e6c7",
+          200: "#97d197",
+          300: "#5fb85f",
+          400: "#2ea02e",
+          500: "#008f00",
+          600: "#008a00", // primary
+          700: "#006f00",
+          800: "#005400",
+          900: "#003d00",
+        },
+        // Atea neutral grey (#4D575D) — secondary brand grey for chrome,
+        // borders, and muted surfaces. Use alongside zinc for depth.
+        ateaGrey: {
+          50: "#f4f5f5",
+          100: "#edeeee", // Atea light grey
+          200: "#d5d7d9",
+          300: "#abb0b3",
+          400: "#7d848a",
+          500: "#4d575d", // primary grey
+          600: "#3f484e",
+          700: "#323a3f",
+          800: "#242b2f",
+          900: "#171c1f",
+        },
+        // Atea secondary palette — approved for illustrations, charts,
+        // and accent tones. Prefer atea-green for interactive elements;
+        // use these for categorical coding only.
+        ateaAccent: {
+          yellow: "#f6bd18",
+          orange: "#ec7a2e",
+          red: "#d62429",
+          teal: "#097288",
+          purple: "#483d7c",
+          blue: "#0965b1",
         },
       },
       fontFamily: {
