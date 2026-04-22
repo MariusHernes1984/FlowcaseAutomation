@@ -17,8 +17,11 @@ DEFAULT_COUNTRY = "no"
 
 COUNTRIES_CACHE_TTL = 3600.0   # 1 hour — countries/offices change rarely
 SKILLS_CACHE_TTL = 3600.0      # 1 hour — skill taxonomy changes rarely
+CUSTOMERS_CACHE_TTL = 3600.0   # 1 hour — customer catalogue is stable
+INDUSTRIES_CACHE_TTL = 3600.0  # 1 hour — industry taxonomy is stable
 DATA_EXPORT_CACHE_TTL = 600.0  # 10 minutes — CVs can update during a session
-BULK_SCAN_PAGE_DELAY = 0.3     # Delay between paginated pages to respect rate limits
+CV_CACHE_TTL = 600.0           # 10 minutes — individual CVs
+BULK_SCAN_PAGE_DELAY = 0.05    # Delay between paginated pages — just enough to be polite
 MAX_RETRIES = 5                # Retry attempts on 429/timeouts
 INITIAL_BACKOFF = 2.0          # Seconds for first retry; doubles each attempt
 MAX_RETRY_AFTER_SECONDS = 30.0 # Cap honoring the server's Retry-After header
@@ -63,7 +66,11 @@ class FlowcaseClient:
 
         self._countries_cache: tuple[list[dict[str, Any]], float] | None = None
         self._skills_cache: tuple[list[dict[str, Any]], float] | None = None
+        self._customers_cache: tuple[list[dict[str, Any]], float] | None = None
+        self._industries_cache: tuple[list[dict[str, Any]], float] | None = None
         self._data_export_users_cache: tuple[list[dict[str, Any]], float] | None = None
+        # Per-user CV cache — keyed by user_id → (cv, ts)
+        self._cv_cache: dict[str, tuple[dict[str, Any], float]] = {}
 
     @classmethod
     def from_env(cls) -> "FlowcaseClient":
@@ -370,6 +377,85 @@ class FlowcaseClient:
 
         self._data_export_users_cache = (all_users, now)
         return all_users
+
+    # ------------------------------------------------------------------
+    # Customer + industry taxonomies (data_export)
+    # ------------------------------------------------------------------
+
+    async def _get_data_export_all(
+        self,
+        category: str,
+        cache_attr: str,
+        ttl: float,
+        *,
+        force_refresh: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Paginate /data_export/{category} and cache the full list."""
+        now = time.time()
+        cached = getattr(self, cache_attr)
+        if not force_refresh and cached:
+            data, ts = cached
+            if now - ts < ttl:
+                return data
+
+        all_items: list[dict[str, Any]] = []
+        offset = 0
+        page_size = 100
+        while True:
+            resp = await self.get(
+                f"/data_export/{category}",
+                params={"limit": page_size, "offset": offset},
+            )
+            if not isinstance(resp, dict):
+                break
+            values = resp.get("values") or []
+            if not values:
+                break
+            all_items.extend(values)
+            total = resp.get("total") or 0
+            if total and len(all_items) >= total:
+                break
+            if len(values) < page_size:
+                break
+            offset += len(values)
+            await asyncio.sleep(BULK_SCAN_PAGE_DELAY)
+
+        setattr(self, cache_attr, (all_items, now))
+        return all_items
+
+    async def get_customers(self, *, force_refresh: bool = False) -> list[dict[str, Any]]:
+        return await self._get_data_export_all(
+            "customers", "_customers_cache", CUSTOMERS_CACHE_TTL, force_refresh=force_refresh
+        )
+
+    async def get_industries(self, *, force_refresh: bool = False) -> list[dict[str, Any]]:
+        return await self._get_data_export_all(
+            "industries", "_industries_cache", INDUSTRIES_CACHE_TTL, force_refresh=force_refresh
+        )
+
+    # ------------------------------------------------------------------
+    # Per-CV caching
+    # ------------------------------------------------------------------
+
+    async def get_cv(
+        self,
+        user_id: str,
+        cv_id: str,
+        *,
+        force_refresh: bool = False,
+    ) -> dict[str, Any]:
+        """Fetch + cache a single CV. Key is user_id so a re-fetch via a
+        different cv_id under the same user still reuses the hit."""
+        now = time.time()
+        cached = self._cv_cache.get(user_id)
+        if not force_refresh and cached is not None:
+            cv, ts = cached
+            if now - ts < CV_CACHE_TTL:
+                return cv
+        cv = await self.get(f"/cvs/{user_id}/{cv_id}")
+        if isinstance(cv, dict):
+            self._cv_cache[user_id] = (cv, now)
+        return cv if isinstance(cv, dict) else {}
 
 
 def format_http_error(exc: Exception) -> str:

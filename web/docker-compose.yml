@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+
+  # Cosmos DB Linux emulator — uncomment once you want persistent storage
+  # in local dev. Heavy (~2 GB image). Until then, run the backend
+  # against a real Cosmos DB account (or Cosmos DB serverless in Azure).
+  # cosmos:
+  #   image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+  #   ports:
+  #     - "8081:8081"
+  #     - "10250-10255:10250-10255"
+  #   environment:
+  #     AZURE_COSMOS_EMULATOR_PARTITION_COUNT: "3"
+  #     AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE: "true"
+  #   volumes:
+  #     - cosmos-data:/data
+
+# volumes:
+#   cosmos-data:

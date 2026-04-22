@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://rsms.me/inter/inter.css");
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-zinc-50 font-sans text-zinc-900 antialiased;
+  }
+  /* Use the variable font feature set — tighter number rendering. */
+  @supports (font-variation-settings: normal) {
+    body {
+      font-family:
+        "Inter var",
+        ui-sans-serif,
+        system-ui,
+        sans-serif;
+    }
+  }
+
+  /* Subtle scrollbars. */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-zinc-300 hover:bg-zinc-400;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+}
+
+@layer utilities {
+  .caret-blink {
+    display: inline-block;
+    width: 0.5ch;
+    background-color: currentColor;
+    animation: caret-blink 1s step-start infinite;
+    vertical-align: baseline;
+  }
+  @keyframes caret-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+}

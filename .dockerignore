@@ -1,0 +1,43 @@
+# Exclude dev/build artifacts at any depth — applies to both the MCP
+# Dockerfile at repo root and the web Dockerfile at web/backend/.
+**/.venv/
+**/venv/
+**/env/
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+**/build/
+**/dist/
+**/dist-ssr/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/htmlcov/
+**/*.log
+**/node_modules/
+**/.vite/
+**/*.tsbuildinfo
+
+# VCS + CI + personal config
+.git/
+.gitignore
+.github/
+.claude/
+
+# Never ship secrets or data into the image
+**/.env
+**/.env.*
+!**/.env.example
+data/
+tests/
+!tests/eval/gold.yaml
+docs/
+infra/
+
+# MCP / IDE / OS junk
+.mcp.json
+**/.vscode/
+**/.idea/
+**/.DS_Store
+**/Thumbs.db

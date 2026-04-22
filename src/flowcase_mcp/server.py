@@ -34,6 +34,11 @@ from flowcase_mcp.formatting import (
     compact_user,
     pick_lang,
 )
+from flowcase_mcp.projects import (
+    find_projects_aggregated,
+    list_customers_compact,
+    list_industries_compact,
+)
 from flowcase_mcp.regions import REGION_MAP, region_overview
 
 load_dotenv()
@@ -1316,4 +1321,272 @@ async def flowcase_list_regions(params: ListRegionsInput) -> str:
 
     valid_keys = ", ".join(sorted(REGION_MAP.keys()))
     lines.append(f"_Valid region keys: {valid_keys}._")
+    return "\n".join(lines).strip()
+
+
+# ---------------------------------------------------------------------------
+# flowcase_list_customers
+# ---------------------------------------------------------------------------
+
+
+class ListCustomersInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+    query: Optional[str] = Field(
+        default=None,
+        description="Substring filter on customer name (case-insensitive).",
+    )
+    limit: int = Field(default=50, ge=1, le=500)
+    offset: int = Field(default=0, ge=0)
+    language: str = Field(
+        default_factory=lambda: os.environ.get("FLOWCASE_DEFAULT_LANGUAGE", "no"),
+    )
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN)
+
+
+@mcp.tool(
+    name="flowcase_list_customers",
+    annotations={
+        "title": "List Flowcase customers",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    },
+)
+async def flowcase_list_customers(params: ListCustomersInput) -> str:
+    """Browse known customers. Useful before narrowing flowcase_find_projects
+    by a specific customer — lets you see the exact name the CV data uses.
+    """
+    client = _get_client()
+    try:
+        data = await list_customers_compact(
+            client,
+            query=params.query,
+            limit=params.limit,
+            offset=params.offset,
+            lang=params.language,
+        )
+    except Exception as e:
+        return f"Error: {format_http_error(e)}"
+
+    if params.response_format == ResponseFormat.JSON:
+        return json.dumps(data, indent=2, ensure_ascii=False)
+
+    header = f"# Customers ({data['count']} of {data['total']})"
+    if params.query:
+        header += f" — filter '{params.query}'"
+    lines = [header, ""]
+    for c in data.get("customers", []):
+        lines.append(f"- **{c['name']}** — `{c['customer_id']}`")
+    if data.get("has_more"):
+        lines.append("")
+        lines.append(f"_More — call with offset={params.offset + data['count']}._")
+    return "\n".join(lines).strip()
+
+
+# ---------------------------------------------------------------------------
+# flowcase_list_industries
+# ---------------------------------------------------------------------------
+
+
+class ListIndustriesInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+    query: Optional[str] = Field(
+        default=None,
+        description="Substring filter on industry name (case-insensitive).",
+    )
+    limit: int = Field(default=50, ge=1, le=500)
+    offset: int = Field(default=0, ge=0)
+    language: str = Field(
+        default_factory=lambda: os.environ.get("FLOWCASE_DEFAULT_LANGUAGE", "no"),
+    )
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN)
+
+
+@mcp.tool(
+    name="flowcase_list_industries",
+    annotations={
+        "title": "List Flowcase industries",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    },
+)
+async def flowcase_list_industries(params: ListIndustriesInput) -> str:
+    """Browse known industries. Useful before scoping flowcase_find_projects
+    by sector ('bank', 'offentlig', 'energi', …)."""
+    client = _get_client()
+    try:
+        data = await list_industries_compact(
+            client,
+            query=params.query,
+            limit=params.limit,
+            offset=params.offset,
+            lang=params.language,
+        )
+    except Exception as e:
+        return f"Error: {format_http_error(e)}"
+
+    if params.response_format == ResponseFormat.JSON:
+        return json.dumps(data, indent=2, ensure_ascii=False)
+
+    header = f"# Industries ({data['count']} of {data['total']})"
+    if params.query:
+        header += f" — filter '{params.query}'"
+    lines = [header, ""]
+    for i in data.get("industries", []):
+        lines.append(f"- **{i['name']}** — `{i['industry_id']}`")
+    if data.get("has_more"):
+        lines.append("")
+        lines.append(f"_More — call with offset={params.offset + data['count']}._")
+    return "\n".join(lines).strip()
+
+
+# ---------------------------------------------------------------------------
+# flowcase_find_projects
+# ---------------------------------------------------------------------------
+
+
+class FindProjectsInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+    industries: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Industry names (e.g. ['Bank', 'Offentlig']). Substring match "
+            "is allowed — use flowcase_list_industries to see exact names. "
+            "This is the primary filter and recommended as default scope."
+        ),
+    )
+    customers: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Customer names or IDs. Substring match; use "
+            "flowcase_list_customers to preview exact names."
+        ),
+    )
+    skills: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Skill names or skill IDs (same semantics as "
+            "flowcase_find_users_by_skill). Filters on the project's own "
+            "skill list, not the consultant's overall CV."
+        ),
+    )
+    description_contains: Optional[str] = Field(
+        default=None,
+        description=(
+            "Free-text substring that must appear somewhere in the "
+            "project's description / long_description / role summaries."
+        ),
+    )
+    since_year: Optional[int] = Field(
+        default=None,
+        ge=2000,
+        le=2100,
+        description="Exclude projects that started before this year.",
+    )
+    max_results: int = Field(default=10, ge=1, le=50)
+    max_candidates: int = Field(
+        default=80,
+        ge=10,
+        le=400,
+        description=(
+            "Upper bound on CVs fetched per call. Larger = more complete "
+            "results but slower. 80 is typically enough."
+        ),
+    )
+    language: str = Field(
+        default_factory=lambda: os.environ.get("FLOWCASE_DEFAULT_LANGUAGE", "no"),
+    )
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN)
+
+
+@mcp.tool(
+    name="flowcase_find_projects",
+    annotations={
+        "title": "Find reference projects across CVs",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    },
+)
+async def flowcase_find_projects(params: FindProjectsInput) -> str:
+    """Aggregate project experiences from multiple CVs into deliveries.
+
+    Flowcase only exposes project data inside each consultant's CV, so
+    this tool walks candidate CVs, extracts ``project_experiences`` that
+    match the filters, and groups entries that look like the same real
+    engagement (same customer + overlapping timeline). The result is a
+    project-first view you can use for reference pitches.
+
+    Industry is the intended primary filter — ``customers`` and ``skills``
+    refine within it. Combine with ``description_contains`` for phrases
+    the bid/RFP uses. The first call in a fresh session can take 5–10 s
+    while CVs are warmed; subsequent calls are fast.
+    """
+    client = _get_client()
+    try:
+        data = await find_projects_aggregated(
+            client,
+            industries=params.industries,
+            customers=params.customers,
+            skills=params.skills,
+            description_contains=params.description_contains,
+            since_year=params.since_year,
+            max_results=params.max_results,
+            max_candidates=params.max_candidates,
+            lang=params.language,
+        )
+    except Exception as e:
+        return f"Error: {format_http_error(e)}"
+
+    if params.response_format == ResponseFormat.JSON:
+        return json.dumps(data, indent=2, ensure_ascii=False)
+
+    lines: list[str] = [
+        f"# Reference projects — {data['returned']} of {data['total']}",
+        "",
+    ]
+    filters = data.get("filters") or {}
+    if any(filters.values()):
+        chips = []
+        if filters.get("industries"):
+            chips.append(f"industry={filters['industries']}")
+        if filters.get("customers"):
+            chips.append(f"customer={filters['customers']}")
+        if filters.get("skills"):
+            chips.append(f"skills={filters['skills']}")
+        if filters.get("description_contains"):
+            chips.append(f"text≈'{filters['description_contains']}'")
+        if filters.get("since_year"):
+            chips.append(f"since {filters['since_year']}")
+        lines.append("Filters: " + " · ".join(chips))
+        lines.append("")
+
+    unres = data.get("unresolved") or {}
+    if any(unres.values()):
+        lines.append(f"⚠ Unresolved: {unres}")
+        lines.append("")
+
+    if not data.get("deliveries"):
+        lines.append("_Ingen leveranser matchet._")
+        return "\n".join(lines).strip()
+
+    for d in data["deliveries"]:
+        header = f"## {d['customer']}"
+        if d.get("industry"):
+            header += f" · {d['industry']}"
+        lines.append(header)
+        date_line = f"{d.get('from', '?')} → {d.get('to', 'nå')}"
+        names = ", ".join(c.get("name", "?") for c in d["consultants"])
+        lines.append(f"_{date_line}_ · {len(d['consultants'])} konsulent(er): {names}")
+        if d.get("description"):
+            lines.append("")
+            lines.append(d["description"])
+        if d.get("skills_used"):
+            lines.append("")
+            lines.append("Skills: " + ", ".join(d["skills_used"][:15]))
+        lines.append("")
     return "\n".join(lines).strip()

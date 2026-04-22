@@ -1,0 +1,14 @@
+node_modules/
+dist/
+dist-ssr/
+*.log
+.vite/
+.DS_Store
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Local env
+.env
+.env.local
+.env.*.local

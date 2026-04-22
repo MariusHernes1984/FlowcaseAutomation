@@ -183,6 +183,13 @@ efficient repeated queries.
 - **Read-only by design.** Version 0.1 only calls `GET` endpoints. No user
   records, CVs, or masterdata can be modified through this MCP.
 
+## Azure deployment (optional)
+
+For shared team use, the server can run as an Azure Container App with
+X-API-Key auth and Key Vault-backed secrets. See
+[`docs/deployment.md`](docs/deployment.md) for the full infra (Bicep
+template in `infra/main.bicep`) and step-by-step walkthrough.
+
 ## OpenAPI reference
 
 `openapi.json` is the Flowcase proxy spec retrieved from ServiceHub. Keep it

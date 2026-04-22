@@ -58,3 +58,6 @@ htmlcov/
 # Availability data (sensitive — billing rates per consultant)
 data/availability.xlsx
 data/*.xlsx
+
+# Eval output (results contain question + answer dumps; keep out of git)
+tests/eval/results/

@@ -1,0 +1,9 @@
+# Eval harness deps. Install into any venv you want to run from:
+#   pip install -r tests/eval/requirements.txt
+#
+# The web backend's venv already has most of these, so the shortcut is:
+#   cd web/backend && pip install -e .[dev] && pip install pyyaml
+pyyaml>=6.0
+openai>=1.40
+httpx>=0.27
+pydantic>=2.7
